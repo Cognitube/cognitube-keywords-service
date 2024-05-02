@@ -51,7 +51,7 @@ func getKeywordsFromGemini(transcript string) (string, error) {
 	model.SetTemperature(1)
 	model.SetTopP(0.95)
 	model.SetTopK(0)
-	model.SetMaxOutputTokens(8192)
+	model.SetMaxOutputTokens(65536)
 
 	model.SafetySettings = []*genai.SafetySetting{
 		{
@@ -196,8 +196,10 @@ func getKeywordsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error creating a temporary file: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer os.Remove(tempFile.Name())
 	defer tempFile.Close()
 
+	log.Printf("Temporary File: %+v\n", tempFile.Name())
 	// Copy the file to the destination
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
@@ -206,6 +208,7 @@ func getKeywordsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	tempFile.Write(fileBytes)
 
+	log.Printf("File saved to: %s\n", tempFile.Name())
 	// Convert video to audio
 	audioPath, err := extractAudio(tempFile.Name())
 	if err != nil {
@@ -213,6 +216,7 @@ func getKeywordsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Audio saved to: %s\n", audioPath)
 	// Get transcript from Whisper API
 	transcript, err := getTranscriptFromWhisper(audioPath)
 	if err != nil {
@@ -220,6 +224,7 @@ func getKeywordsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Transcript: %s\n", transcript)
 	keywords, err := getKeywordsFromGemini(transcript)
 	if err != nil {
 		http.Error(w, "Error getting keywords from Gemini API: "+err.Error(), http.StatusInternalServerError)
@@ -240,8 +245,8 @@ func main() {
 	http.HandleFunc("/getKeywords", getKeywordsHandler)
 
 	// Start the server on localhost port 8080
-	log.Println("Starting server on :8080")
-	err = http.ListenAndServe(":8080", nil) // nil tells it to use the default router we set up with http.HandleFunc
+	log.Println("Starting server on :8083")
+	err = http.ListenAndServe(":8083", nil) // nil tells it to use the default router we set up with http.HandleFunc
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
