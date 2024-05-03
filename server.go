@@ -19,6 +19,25 @@ import (
 
 const whisperUrl = "https://api.openai.com/v1/audio/transcriptions"
 
+type Segment struct {
+	id                int
+	seek              int
+	start             float64
+	end               float64
+	text              string
+	tokens            []int
+	temperature       float64
+	avg_logprob       float64
+	compression_ratio float64
+	no_speech_prob    float64
+}
+
+type WhisperResponse struct {
+	start float64
+	end   float64
+	text  string
+}
+
 func getKeywordsFromGemini(transcript string) (string, error) {
 	ctx := context.Background()
 	// Access your API key as an environment variable (see "Set up your API key" above)
@@ -74,11 +93,11 @@ func getKeywordsFromGemini(transcript string) (string, error) {
 
 	re := regexp.MustCompile(`(?s)\[.*?\]`)
 	matches := re.FindStringSubmatch(res)
-	if len(matches) > 0 {
-		return matches[0], nil
+	if len(matches) == 0 {
+		return "", fmt.Errorf("no match found")
 	}
 
-	return "", fmt.Errorf("no match found")
+	return matches[0], nil
 }
 
 func getTranscriptFromWhisper(audioFilePath string) (string, error) {
@@ -155,7 +174,26 @@ func getTranscriptFromWhisper(audioFilePath string) (string, error) {
 		return "", fmt.Errorf("segments field not found")
 	}
 
-	return string(segmentsData), nil
+	segmentsArr := []Segment{}
+	if err := json.Unmarshal(segmentsData, &segmentsArr); err != nil {
+		return "", fmt.Errorf("error parsing segments JSON: %w", err)
+	}
+
+	whisperResponse := []WhisperResponse{}
+	for _, segment := range segmentsArr {
+		whisperResponse = append(whisperResponse, WhisperResponse{
+			start: segment.start,
+			end:   segment.end,
+			text:  segment.text,
+		})
+	}
+
+	respJson, err := json.Marshal(whisperResponse)
+	if err != nil {
+		return "", fmt.Errorf("error marshalling response to JSON: %w", err)
+	}
+
+	return string(respJson), nil
 }
 
 func getKeywordsHandler(w http.ResponseWriter, r *http.Request) {
