@@ -66,8 +66,7 @@ func getKeywordsFromGemini(transcript string) (string, error) {
 	res := ""
 	for _, cand := range resp.Candidates {
 		if cand.Content != nil {
-			for i, part := range cand.Content.Parts {
-				fmt.Println(i, part.(genai.Text))
+			for _, part := range cand.Content.Parts {
 				res += string(part.(genai.Text))
 			}
 		}
@@ -79,7 +78,7 @@ func getKeywordsFromGemini(transcript string) (string, error) {
 		return matches[0], nil
 	}
 
-	return "", fmt.Errorf("No match found")
+	return "", fmt.Errorf("no match found")
 }
 
 func getTranscriptFromWhisper(audioFilePath string) (string, error) {
@@ -205,14 +204,12 @@ func getKeywordsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Transcript: %s\n", transcript)
 	keywords, err := getKeywordsFromGemini(transcript)
 	if err != nil {
 		http.Error(w, "Error getting keywords from Gemini API: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("Keywords: %s\n", keywords)
 	// Return the transcript
 	w.Write([]byte(keywords))
 }
@@ -224,11 +221,16 @@ func main() {
 	}
 
 	// Define a handler function
-	http.HandleFunc("/getKeywords", getKeywordsHandler)
+	http.HandleFunc("/api/getKeywords", getKeywordsHandler)
 
-	// Start the server on localhost port 8080
-	log.Println("Starting server on :8083")
-	err = http.ListenAndServe(":8083", nil) // nil tells it to use the default router we set up with http.HandleFunc
+	// Start the server on localhost port 8083
+	listenAddr := ":8083"
+	if val, ok := os.LookupEnv("FUNCTIONS_CUSTOMHANDLER_PORT"); ok {
+		listenAddr = ":" + val
+	}
+
+	log.Println("Starting server on " + listenAddr + "...")
+	err = http.ListenAndServe(listenAddr, nil) // nil tells it to use the default router we set up with http.HandleFunc
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
