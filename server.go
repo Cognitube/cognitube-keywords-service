@@ -10,8 +10,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"os/exec"
-	"path/filepath"
+	"regexp"
 
 	"github.com/google/generative-ai-go/genai"
 	"github.com/joho/godotenv"
@@ -19,23 +18,6 @@ import (
 )
 
 const whisperUrl = "https://api.openai.com/v1/audio/transcriptions"
-
-func extractAudio(videoFilePath string) (string, error) {
-	// Determine the output file path
-	dir := filepath.Dir(videoFilePath)
-	audioFilePath := filepath.Join(dir, "extracted_audio.mp4")
-
-	// Construct the ffmpeg command to extract audio
-	cmd := exec.Command("ffmpeg", "-i", videoFilePath, "-vn", "-acodec", "aac", "-b:a", "96000", "-ac", "1", "-ar", "44100", audioFilePath)
-
-	// Run the command
-	err := cmd.Run()
-	if err != nil {
-		return "", fmt.Errorf("ffmpeg error: %w", err)
-	}
-
-	return audioFilePath, nil
-}
 
 func getKeywordsFromGemini(transcript string) (string, error) {
 	ctx := context.Background()
@@ -73,7 +55,7 @@ func getKeywordsFromGemini(transcript string) (string, error) {
 	}
 
 	model.SystemInstruction = &genai.Content{
-		Parts: []genai.Part{genai.Text("You are a keyword extraction model. \n Please extract 20 - 30 keywords from the following user context, where each keyword should be low frequency nouns that is important to the user context. The user input format is a list of json file, where the start and the text attributes in segment are very useful in this problem. your output should looks like this: \n[{keyword:\\\"keyword1\\\", description:\\\"description of keyword1 in the given context\\\",startTime:0.0,endTime:3.83}, {keyword:\\\"keyword2\\\", explain:\\\"description of keyword2 in the given context\\\",startTime:3.83,endTime:5.17}, ...]. The description of the keywords should be specific, first explain the actual meaning of this keyword, and then related to the context explain what this keyword means in the video, and no less than 150 words. The startTime and endTime of the return value should round to two decimal places.\n\n")},
+		Parts: []genai.Part{genai.Text("You are a keyword extraction model. \n Please extract 20 - 30 keywords from the following user context, where each keyword should be low frequency nouns that is important to the user context. The user input format is a list of json file, where the start and the text attributes in segment are very useful in this problem. your output should looks like this: \n[{keyword:\\\"keyword1\\\", description:\\\"description of keyword1 in the given context\\\",startTime:0.0,endTime:3.83}, {keyword:\\\"keyword2\\\", explain:\\\"description of keyword2 in the given context\\\",startTime:3.83,endTime:5.17}, ...]. The description of the keywords should be specific, first explain the actual meaning of this keyword, and then related to the context explain what this keyword means in the video, and no less than 150 words. The startTime and endTime of the return value should round to two decimal places. Display only json. Do not format it in markdown.\n\n")},
 	}
 
 	resp, err := model.GenerateContent(ctx, genai.Text(transcript))
@@ -81,16 +63,23 @@ func getKeywordsFromGemini(transcript string) (string, error) {
 		log.Fatal(err)
 	}
 
+	res := ""
 	for _, cand := range resp.Candidates {
 		if cand.Content != nil {
-			for _, part := range cand.Content.Parts {
-				fmt.Println(part)
+			for i, part := range cand.Content.Parts {
+				fmt.Println(i, part.(genai.Text))
+				res += string(part.(genai.Text))
 			}
 		}
 	}
-	fmt.Println("---")
 
-	return "", nil
+	re := regexp.MustCompile(`(?s)\[.*?\]`)
+	matches := re.FindStringSubmatch(res)
+	if len(matches) > 0 {
+		return matches[0], nil
+	}
+
+	return "", fmt.Errorf("No match found")
 }
 
 func getTranscriptFromWhisper(audioFilePath string) (string, error) {
@@ -191,7 +180,7 @@ func getKeywordsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("MIME Header: %+v\n", handler.Header)
 
 	// Create a temporary file to save the uploaded video
-	tempFile, err := os.CreateTemp("", "temp-*.mp4")
+	tempFile, err := os.CreateTemp("", "temp-*.mp3")
 	if err != nil {
 		http.Error(w, "Error creating a temporary file: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -208,17 +197,9 @@ func getKeywordsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	tempFile.Write(fileBytes)
 
-	log.Printf("File saved to: %s\n", tempFile.Name())
-	// Convert video to audio
-	audioPath, err := extractAudio(tempFile.Name())
-	if err != nil {
-		http.Error(w, "Error converting video to audio: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	log.Printf("Audio saved to: %s\n", audioPath)
+	log.Printf("Audio saved to: %s\n", tempFile.Name())
 	// Get transcript from Whisper API
-	transcript, err := getTranscriptFromWhisper(audioPath)
+	transcript, err := getTranscriptFromWhisper(tempFile.Name())
 	if err != nil {
 		http.Error(w, "Error getting transcript from Whisper API: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -231,6 +212,7 @@ func getKeywordsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Keywords: %s\n", keywords)
 	// Return the transcript
 	w.Write([]byte(keywords))
 }
