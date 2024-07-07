@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Build the Go app
-RUN go build -o service service.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o main
 
 # Stage 2: Create the runtime image
 FROM alpine:latest
@@ -23,10 +23,10 @@ FROM alpine:latest
 WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage
-COPY --from=builder /app/server .
+COPY --from=builder /app/main .
+COPY --from=builder /app/dev.env .
 
-# Expose port 8083 to the outside world
-EXPOSE 8083
+EXPOSE 8080
 
 # Command to run the executable
-CMD ["./server"]
+CMD ["./main", "-env", "dev.env"]

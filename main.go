@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	// get the dev filename from args
+	// Use -env flag to specify the .env file to load
 	envFile := flag.String("env", ".env", "The name of the .env file to load")
 	flag.Parse()
 
