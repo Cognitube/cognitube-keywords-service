@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Build the Go app
-RUN go build -o server server.go
+RUN go build -o service service.go
 
 # Stage 2: Create the runtime image
 FROM alpine:latest
