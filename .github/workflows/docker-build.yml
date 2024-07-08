@@ -39,9 +39,12 @@ jobs:
                   push: true
                   tags: haozhealexzhang/cognitube-ai-service:${{ steps.prep.outputs.tag }}
 
+            - name: List Docker images after build
+              run: docker images
+
             - name: Clean up Post Run
               run: |
-                  docker rmi haozhealexzhang/cognitube-ai-service:${{ steps.prep.outputs.tag }}
+                  docker rmi haozhealexzhang/cognitube-ai-service:${{ steps.prep.outputs.tag }} || true
                   if [[ $GITHUB_REF == refs/heads/main ]]; then
-                    docker rmi haozhealexzhang/cognitube-ai-service:latest
+                    docker rmi haozhealexzhang/cognitube-ai-service:latest || true
                   fi
