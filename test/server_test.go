@@ -2,14 +2,15 @@ package test
 
 import (
 	"bytes"
-	"cognitube.com/keywords-service/server"
-	"github.com/joho/godotenv"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"cognitube.com/keywords-service/server"
+	"github.com/joho/godotenv"
 )
 
 func TestServer(t *testing.T) {
@@ -47,9 +48,9 @@ func TestServer(t *testing.T) {
 
 	// Step 8: Pass the multipart.File to GetKeyDescFromHttpAudioFile
 	keywordsServer := server.NewCongitubeKeywordsServer()
-	go keywordsServer.StartListening("8080")
+	go keywordsServer.StartListening("8082")
 
-	resp, err := http.Post("http://localhost:8080/api/getKeywords", multipartWriter.FormDataContentType(), &buf)
+	resp, err := http.Post("http://localhost:8082/api/getKeywords", multipartWriter.FormDataContentType(), &buf)
 
 	if err != nil {
 		t.Fatalf("Error getting keywords: %v", err)
