@@ -24,9 +24,13 @@ WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /app/main .
-COPY --from=builder /app/dev.env .
+
+ENV APPLICATION_OPENAI_KEY=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
+ENV APPLICATION_WHISPER_URL=https://api.openai.com/v1/audio/transcriptions
+ENV APPLICATION_GPT_URL=https://api.openai.com/v1/chat/completions
+ENV PORT=8082
 
 EXPOSE 8082
 
 # Command to run the executable
-CMD ["./main", "-env", "dev.env"]
+CMD ["./main"]
