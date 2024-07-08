@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,18 +12,28 @@ type KeywordsHandler struct {
 	Service ICognitubeKeywordsService
 }
 
+type RequestData struct {
+	URL string `json:"url"`
+}
+
 func NewKeywordsHandler(service ICognitubeKeywordsService) *KeywordsHandler {
 	return &KeywordsHandler{Service: service}
 }
 
 func (h *KeywordsHandler) GetKeywords(w http.ResponseWriter, r *http.Request) {
-	url := r.URL.Query().Get("url")
-	if url == "" {
+	var requestData RequestData
+
+	if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
+		http.Error(w, "Error reading request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if requestData.URL == "" {
 		http.Error(w, "URL parameter is missing", http.StatusBadRequest)
 		return
 	}
 
-	resp, err := http.Get(url)
+	resp, err := http.Get(requestData.URL)
 	if err != nil {
 		http.Error(w, "Error downloading file: "+err.Error(), http.StatusInternalServerError)
 		return
