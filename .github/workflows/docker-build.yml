@@ -34,7 +34,7 @@ jobs:
                   push: true
                   tags: |
                       haozhealexzhang/cognitube-ai-service:${{ steps.prep.outputs.tag }}
-                      ${{ github.ref == 'refs/heads/main' && 'haozhealexzhang/cognitube-ai-service:latest' || '' }}
+                      ${{ github.ref == 'refs/heads/main' && 'haozhealexzhang/cognitube-ai-service:latest' || '' }} || true
 
             - name: Clean up Post Run
               run: docker rmi haozhealexzhang/cognitube-ai-service:${{ steps.prep.outputs.tag }} haozhealexzhang/cognitube-ai-service:latest
