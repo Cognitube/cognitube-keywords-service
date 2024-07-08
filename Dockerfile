@@ -26,7 +26,7 @@ WORKDIR /root/
 COPY --from=builder /app/main .
 COPY --from=builder /app/dev.env .
 
-EXPOSE 8080
+EXPOSE 8082
 
 # Command to run the executable
 CMD ["./main", "-env", "dev.env"]

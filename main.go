@@ -1,11 +1,12 @@
 package main
 
 import (
-	"cognitube.com/keywords-service/server"
 	"flag"
 	"fmt"
-	"github.com/joho/godotenv"
 	"os"
+
+	"cognitube.com/keywords-service/server"
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "8082"
 	}
 
 	keywordsServer := server.NewCongitubeKeywordsServer()
