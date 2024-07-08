@@ -1,12 +1,19 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 )
 
 type KeywordsHandler struct {
 	Service ICognitubeKeywordsService
+}
+
+type RequestData struct {
+	URL string `json:"url"`
 }
 
 func NewKeywordsHandler(service ICognitubeKeywordsService) *KeywordsHandler {
@@ -14,29 +21,58 @@ func NewKeywordsHandler(service ICognitubeKeywordsService) *KeywordsHandler {
 }
 
 func (h *KeywordsHandler) GetKeywords(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(32 << 20)
-	if err != nil {
-		http.Error(w, "Error parsing multipart form: "+err.Error(), http.StatusInternalServerError)
+	var requestData RequestData
+
+	if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
+		http.Error(w, "Error decoding JSON from body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	file, handler, err := r.FormFile("audio")
-	if err != nil {
-		http.Error(w, "Error retrieving the audio file: "+err.Error(), http.StatusInternalServerError)
+	if requestData.URL == "" {
+		http.Error(w, "URL parameter is missing in the JSON body", http.StatusBadRequest)
 		return
 	}
-	defer file.Close()
 
-	fmt.Printf("Received File: %+v\n", handler.Filename)
-	fmt.Printf("File Size: %+v\n", handler.Size)
-	fmt.Printf("MIME Header: %+v\n", handler.Header)
+	resp, err := http.Get(requestData.URL)
+	if err != nil {
+		http.Error(w, "Error downloading file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
 
-	keywords, err := h.Service.GetKeyDescFromHttpAudioFile(file)
+	if resp.StatusCode != http.StatusOK {
+		http.Error(w, "Non-OK HTTP status: "+resp.Status, http.StatusInternalServerError)
+		return
+	}
+
+	tempFile, err := os.CreateTemp("", "download-*.oga")
+	if err != nil {
+		http.Error(w, "Error creating a temp file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer tempFile.Close()
+	defer os.Remove(tempFile.Name())
+
+	_, err = io.Copy(tempFile, resp.Body)
+	if err != nil {
+		http.Error(w, "Error saving the downloaded file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Printf("Downloaded and saved file: %+v\n", tempFile.Name())
+
+	_, err = tempFile.Seek(0, io.SeekStart)
+	if err != nil {
+		http.Error(w, "Error seeking the file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	keywords, err := h.Service.GetKeyDescFromHttpAudioFile(tempFile)
 	if err != nil {
 		http.Error(w, "Error getting keywords: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Println("Done processing the audio file ", handler.Filename, " to keywords")
+	fmt.Println("Done processing the audio file to keywords")
 	w.Write([]byte(keywords))
 }
