@@ -24,12 +24,12 @@ func (h *KeywordsHandler) GetKeywords(w http.ResponseWriter, r *http.Request) {
 	var requestData RequestData
 
 	if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
-		http.Error(w, "Error reading request body: "+err.Error(), http.StatusBadRequest)
+		http.Error(w, "Error decoding JSON from body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if requestData.URL == "" {
-		http.Error(w, "URL parameter is missing", http.StatusBadRequest)
+		http.Error(w, "URL parameter is missing in the JSON body", http.StatusBadRequest)
 		return
 	}
 
