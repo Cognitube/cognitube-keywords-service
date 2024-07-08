@@ -6,9 +6,7 @@ type KeywordsDescriptor interface {
 }
 
 func NewKeywordsDescriptor(name string) KeywordsDescriptor {
-	if name == "gemini" {
-		return NewGeminiClient()
-	} else if name == "gpt" {
+	if name == "gpt" {
 		return NewGPTClient()
 	}
 	return nil
