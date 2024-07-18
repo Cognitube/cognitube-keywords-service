@@ -20,6 +20,19 @@ func NewKeywordsHandler(service ICognitubeKeywordsService) *KeywordsHandler {
 	return &KeywordsHandler{Service: service}
 }
 
+func (h *KeywordsHandler) CallbackGet(w http.ResponseWriter, r *http.Request) {
+	token := r.URL.Query().Get("validationToken")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(token))
+}
+
+func (h *KeywordsHandler) CallbackPost(w http.ResponseWriter, r *http.Request) {
+	go h.Service.OnTranscriptionCallback(r)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("received"))
+}
+
 func (h *KeywordsHandler) GetKeywords(w http.ResponseWriter, r *http.Request) {
 	var requestData RequestData
 

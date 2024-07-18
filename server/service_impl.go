@@ -2,21 +2,28 @@ package server
 
 import (
 	"cognitube.com/keywords-service/keydesc"
+	"cognitube.com/keywords-service/publish"
 	"cognitube.com/keywords-service/transcription"
+	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"os"
 )
 
 type CongnitubeKeywordsService struct {
-	descriptor  keydesc.KeywordsDescriptor
-	transcriber transcription.Transcriber
+	descriptor       keydesc.KeywordsDescriptor
+	transcriber      transcription.Transcriber
+	asyncTranscriber transcription.AsyncTranscriber
+	resultPublisher  publish.TranscriptionPublisher
 }
 
 func NewCognitubeKeywordsService() ICognitubeKeywordsService {
 	return &CongnitubeKeywordsService{
-		descriptor:  keydesc.NewKeywordsDescriptor("gpt"),
-		transcriber: transcription.NewTranscriber("whisper"),
+		descriptor:       keydesc.NewKeywordsDescriptor("gpt"),
+		transcriber:      transcription.NewTranscriber("whisper"),
+		asyncTranscriber: transcription.NewAsyncTranscriberClient("azure"),
+		resultPublisher:  publish.NewKafkaTranscriptionPublisher(),
 	}
 }
 
@@ -63,4 +70,17 @@ func (c *CongnitubeKeywordsService) GetKeyDescFromHttpAudioFile(multiFile multip
 		return "", err
 	}
 	return keywords, nil
+}
+
+func (c *CongnitubeKeywordsService) CreateAsyncTranscription(fileUrl string, displayName string) (string, error) {
+	return c.asyncTranscriber.CreateTranscription(fileUrl, displayName)
+}
+
+func (c *CongnitubeKeywordsService) OnTranscriptionCallback(r *http.Request) {
+	res, err := c.asyncTranscriber.OnTranscriptionCallback(r)
+	if err != nil {
+		fmt.Println("Error on transcription callback: Error get transcription result", err)
+		return
+	}
+	c.resultPublisher.PublishTranscriptionResult(res)
 }
