@@ -3,9 +3,9 @@ package transcription
 import (
 	"cognitube.com/keywords-service/env"
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/carlmjohnson/requests"
+	"github.com/tidwall/gjson"
 	"io"
 	"net/http"
 	"strings"
@@ -19,20 +19,16 @@ type IAzureClient interface {
 
 type AzureClient struct {
 	IAzureClient
-	apiKey   string
-	azureUrl string
+	ApiKey        string
+	BatchTransURL string
 }
 
 func (a *AzureClient) OnTranscriptionCallback(r *http.Request) (*TranscriptionResult, error) {
 	// Get current finished job ID
-	var resp JobJSON
 	defer r.Body.Close()
 	body, _ := io.ReadAll(r.Body)
-	err := json.Unmarshal(body, &resp)
-	if err != nil {
-		return nil, err
-	}
-	id := a.GetJobIDFromSelfURL(resp.SelfUrl)
+	url := gjson.GetBytes(body, "self").String()
+	id := a.GetJobIDFromSelfURL(url)
 
 	// list all transcription files and get the first one's URL
 	listFileResp, err := a.GetAllTranscriptionFileURLs(id)
@@ -47,7 +43,7 @@ func (a *AzureClient) OnTranscriptionCallback(r *http.Request) (*TranscriptionRe
 		return nil, err
 	}
 
-	// Notify the listener
+	// Build the result
 	result := TranscriptionResult{
 		ID:   id,
 		Text: text,
@@ -56,65 +52,52 @@ func (a *AzureClient) OnTranscriptionCallback(r *http.Request) (*TranscriptionRe
 	return &result, nil
 }
 
-type JobJSON struct {
-	SelfUrl string `json:"self"`
-}
-
 func (a *AzureClient) GetJobIDFromSelfURL(url string) string {
 	return url[strings.LastIndex(url, "/")+1:]
 }
 
 func (a *AzureClient) GetAllTranscriptionFileURLs(jobId string) ([]string, error) {
-	var listFileResp struct {
-		Values []struct {
-			Kind string `json:"kind"`
-			Name string `json:"name"`
-			Url  string `json:"self"`
-		}
-	}
+	var buffer string
 	err := requests.
-		URL(a.azureUrl+"/transcriptions/"+jobId+"/files").
+		URL(a.BatchTransURL+"/"+jobId+"/files").
 		Method(http.MethodGet).
-		Header("Ocp-Apim-Subscription-Key", a.apiKey).
-		ToJSON(&listFileResp).
+		Header("Ocp-Apim-Subscription-Key", a.ApiKey).
+		ToString(&buffer).
 		Fetch(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	var urls []string
-	for _, file := range listFileResp.Values {
-		urls = append(urls, file.Url)
+
+	arr := gjson.Get(buffer, "values.#.links.contentUrl").Array()
+	res := make([]string, len(arr))
+	for i := range arr {
+		res[i] = arr[i].String()
 	}
-	return urls, nil
+	return res, nil
 }
 
 func (a *AzureClient) GetTranscriptionFileText(fileUrl string) (string, error) {
-	var resultFileJSON struct {
-		CombinedRecognizedPhrases []struct {
-			Display string `json:"display"`
-		}
-	}
+	var buffer string
 	err := requests.
 		URL(fileUrl).
 		Method(http.MethodGet).
-		Header("Ocp-Apim-Subscription-Key", a.apiKey).
-		ToJSON(&resultFileJSON).
+		Header("Ocp-Apim-Subscription-Key", a.ApiKey).
+		ToString(&buffer).
 		Fetch(context.Background())
 	if err != nil {
 		return "", err
 	}
-	return resultFileJSON.CombinedRecognizedPhrases[0].Display, nil
+	return gjson.Get(buffer, "combinedRecognizedPhrases.0.display").String(), nil
 }
 
 func (a *AzureClient) CreateTranscription(fileUrl string, displayName string) (string, error) {
-
-	var res JobJSON
+	var buffer string
 
 	err := requests.
-		URL(a.azureUrl).
+		URL(a.BatchTransURL).
 		Method(http.MethodPost).
 		ContentType("application/json").
-		Header("Ocp-Apim-Subscription-Key", a.apiKey).
+		Header("Ocp-Apim-Subscription-Key", a.ApiKey).
 		BodyJSON(map[string]interface{}{
 			"contentUrls": []string{fileUrl},
 			"locale":      "en-US",
@@ -127,19 +110,20 @@ func (a *AzureClient) CreateTranscription(fileUrl string, displayName string) (s
 				"punctuationMode":                       "DictatedAndAutomatic",
 				"profanityFilterMode":                   "Masked",
 			}}).
-		ToJSON(&res).
+		ToString(&buffer).
 		Fetch(context.Background())
 
 	if err != nil {
 		return "", err
 	}
 
-	return a.GetJobIDFromSelfURL(res.SelfUrl), nil
+	url := gjson.Get(buffer, "self").String()
+	return a.GetJobIDFromSelfURL(url), nil
 }
 
 func NewAzureClient() AsyncTranscriber {
 	return &AzureClient{
-		apiKey:   env.GetInstance().AzureKey,
-		azureUrl: env.GetInstance().AzureUrl,
+		ApiKey:        env.GetInstance().AzureKey,
+		BatchTransURL: env.GetInstance().AzureUrl,
 	}
 }

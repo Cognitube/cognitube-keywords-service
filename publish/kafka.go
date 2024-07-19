@@ -3,8 +3,6 @@ package publish
 import (
 	"context"
 	"github.com/segmentio/kafka-go"
-	"log"
-	"time"
 )
 
 type Publisher interface {
@@ -16,23 +14,15 @@ type KafkaPublisher struct {
 }
 
 func (p *KafkaPublisher) Publish(topic string, message []byte) error {
-	conn, err := kafka.DialLeader(context.Background(), "tcp", p.Url, topic, 0)
-	if err != nil {
-		log.Fatal("failed to dial leader:", err)
+	w := &kafka.Writer{
+		Addr:  kafka.TCP(p.Url),
+		Topic: topic,
 	}
-
-	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	_, err = conn.Write(
-		message,
-	)
-	if err != nil {
-		log.Fatal("failed to write messages:", err)
-	}
-
-	if err := conn.Close(); err != nil {
-		log.Fatal("failed to close writer:", err)
-	}
-	return nil
+	defer w.Close()
+	err := w.WriteMessages(context.Background(), kafka.Message{
+		Value: message,
+	})
+	return err
 }
 
 func NewKafkaPublisher(host, port string) Publisher {
