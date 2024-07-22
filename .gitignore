@@ -12,3 +12,5 @@ __azurite_db*__.json
 
 *.env
 /.idea
+
+*.exe
