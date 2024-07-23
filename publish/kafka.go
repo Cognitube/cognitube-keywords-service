@@ -20,7 +20,6 @@ type KafkaPublisher struct {
 
 func (p *KafkaPublisher) PublishProd(topic string, message []byte) error {
 	eventHubNamespace := env.GetInstance().EventHubNamespace
-	eventHubName := env.GetInstance().EventHubName
 	connectionString := env.GetInstance().EventHubConnectionString
 	username := env.GetInstance().Username
 
@@ -31,8 +30,8 @@ func (p *KafkaPublisher) PublishProd(topic string, message []byte) error {
 	}
 
 	writer := &kafka.Writer{
-		Addr:     kafka.TCP(eventHubNamespace),
-		Topic:    eventHubName,
+		Addr:     kafka.TCP(eventHubNamespace + ".servicebus.windows.net:9093"),
+		Topic:    topic,
 		Balancer: &kafka.LeastBytes{},
 		Transport: &kafka.Transport{
 			SASL: mechanism,
