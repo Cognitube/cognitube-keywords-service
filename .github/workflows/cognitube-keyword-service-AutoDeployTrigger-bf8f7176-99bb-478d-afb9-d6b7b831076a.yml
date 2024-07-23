@@ -1,0 +1,47 @@
+name: Trigger auto deployment for cognitube-keyword-service
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ staging ]
+    paths:
+    - '**'
+    - '.github/workflows/cognitube-keyword-service-AutoDeployTrigger-bf8f7176-99bb-478d-afb9-d6b7b831076a.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.COGNITUBEKEYWORDSERVICE_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.COGNITUBEKEYWORDSERVICE_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.COGNITUBEKEYWORDSERVICE_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }} 
+          registryUrl: cogregdev.azurecr.io
+          registryUsername: ${{ secrets.COGNITUBEKEYWORDSERVICE_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.COGNITUBEKEYWORDSERVICE_REGISTRY_PASSWORD }}
+          containerAppName: cognitube-keyword-service
+          resourceGroup: cognitube-dev
+          imageToBuild: cogregdev.azurecr.io/cognitube-keyword-service:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+
