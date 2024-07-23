@@ -1,13 +1,13 @@
 package publish
 
 import (
-	"cognitube.com/keywords-service/env"
 	"context"
 	"crypto/tls"
+	"log"
+
+	"cognitube.com/keywords-service/env"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl/plain"
-	"log"
-	"strings"
 )
 
 type Publisher interface {
@@ -22,12 +22,12 @@ func (p *KafkaPublisher) PublishProd(topic string, message []byte) error {
 	eventHubNamespace := env.GetInstance().EventHubNamespace
 	eventHubName := env.GetInstance().EventHubName
 	connectionString := env.GetInstance().EventHubConnectionString
-	username, password := parseConnectionString(connectionString)
+	username := env.GetInstance().Username
 
 	// Set up SASL configuration
 	mechanism := plain.Mechanism{
 		Username: username,
-		Password: password,
+		Password: connectionString,
 	}
 
 	writer := &kafka.Writer{
@@ -76,18 +76,4 @@ func (p *KafkaPublisher) Publish(topic string, message []byte) error {
 
 func NewKafkaPublisher(host, port string) Publisher {
 	return &KafkaPublisher{host + ":" + port}
-}
-
-func parseConnectionString(connectionString string) (string, string) {
-	// The connection string format is: Endpoint=sb://<NAMESPACE>.servicebus.windows.net/;SharedAccessKeyName=<KEY_NAME>;SharedAccessKey=<KEY_VALUE>
-	// Extract SharedAccessKeyName and SharedAccessKey from the connection string
-	var username, password string
-	for _, part := range strings.Split(connectionString, ";") {
-		if strings.HasPrefix(part, "SharedAccessKeyName=") {
-			username = strings.TrimPrefix(part, "SharedAccessKeyName=")
-		} else if strings.HasPrefix(part, "SharedAccessKey=") {
-			password = strings.TrimPrefix(part, "SharedAccessKey=")
-		}
-	}
-	return username, password
 }
