@@ -132,7 +132,7 @@ func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
 		if retry >= env.GetInstance().KeywordDescMaxRetry {
 			success = false
 			errStr = "Failed to generate keywords description (reached max retry)"
-			log.Fatalf("Failure reason for video %s: %s", vid, desc)
+			log.Printf("Failure reason for video %s: %s", vid, desc)
 			break
 		}
 	}
