@@ -36,7 +36,7 @@ ENV APPLICATION_DEBUG=false
 ENV APPLICATION_GPT_URL=https://api.openai.com/v1/chat/completions
 ENV APPLICATION_KAFKA_HOST=localhost
 ENV APPLICATION_KAFKA_PORT=9092
-ENV APPLICATION_KAFKA_TOPIC=test
+ENV APPLICATION_KAFKA_TOPIC=video-ai-test
 ENV APPLICATION_OPENAI_KEY=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
 ENV APPLICATION_WHISPER_URL=https://api.openai.com/v1/audio/transcriptions
 ENV AZURE_BLOB_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=cognitube;AccountKey=a1XDmr4IlO9I/tcsuh1akTaGFgmp+nQEoQdA8SlFpmmn7Zi0HKeDMk3ntxWjGI/HMFpQjzBys2ZX+AStqYVfsg==;EndpointSuffix=core.windows.net"

@@ -4,6 +4,7 @@ import (
 	"cognitube.com/keywords-service/env"
 	"context"
 	"github.com/carlmjohnson/requests"
+	"log"
 )
 
 func RegisterCallback(url string) {
@@ -28,10 +29,13 @@ func RegisterCallback(url string) {
 		}{TranscriptionCompletion: true},
 		Description: "Automatically registered by AI Service",
 	}
+
 	requests.URL("https://eastus.api.cognitive.microsoft.com/speechtotext/v3.1/webhooks").
 		Method("POST").
 		ContentType("application/json").
 		Header("Ocp-Apim-Subscription-Key", env.GetInstance().AzureKey).
 		BodyJSON(payload).
 		Fetch(context.Background())
+
+	log.Println("Callback Registered: ", url)
 }
