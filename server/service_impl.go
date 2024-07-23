@@ -1,6 +1,12 @@
 package server
 
 import (
+	"io"
+	"log"
+	"mime/multipart"
+	"os"
+	"strconv"
+
 	"cognitube.com/keywords-service/azure"
 	"cognitube.com/keywords-service/env"
 	"cognitube.com/keywords-service/keydesc"
@@ -8,11 +14,6 @@ import (
 	"cognitube.com/keywords-service/result"
 	"cognitube.com/keywords-service/transcription"
 	"github.com/tidwall/gjson"
-	"io"
-	"log"
-	"mime/multipart"
-	"os"
-	"strconv"
 )
 
 type CongnitubeKeywordsService struct {
@@ -131,6 +132,7 @@ func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
 		if retry >= env.GetInstance().KeywordDescMaxRetry {
 			success = false
 			errStr = "Failed to generate keywords description (reached max retry)"
+			log.Fatalf("Failure reason for video %s: %s", vid, desc)
 			break
 		}
 	}
