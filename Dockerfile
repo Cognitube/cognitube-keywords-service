@@ -28,9 +28,9 @@ COPY --from=builder /app/main .
 ENV APPLICATION_OPENAI_KEY=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
 ENV APPLICATION_WHISPER_URL=https://api.openai.com/v1/audio/transcriptions
 ENV APPLICATION_GPT_URL=https://api.openai.com/v1/chat/completions
-ENV PORT=8082
+ENV PORT=8089
 
-EXPOSE 8082
+EXPOSE 8089
 
 # Command to run the executable
 CMD ["./main"]

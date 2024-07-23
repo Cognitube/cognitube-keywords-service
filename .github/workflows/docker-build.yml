@@ -25,7 +25,7 @@ jobs:
             - name: Generate tag
               id: prep
               run: |
-                  if [[ $GITHUB_REF == refs/heads/main ]]; then
+                  if [[ "${{ github.ref }}" == 'refs/heads/main' ]]; then
                     echo "::set-output name=tag::latest"
                   else
                     echo "::set-output name=tag::$(date +'%Y%m%d%H%M%S')-$(git rev-parse --short HEAD)"
@@ -45,6 +45,6 @@ jobs:
             - name: Clean up Post Run
               run: |
                   docker rmi haozhealexzhang/cognitube-ai-service:${{ steps.prep.outputs.tag }} || true
-                  if [[ $GITHUB_REF == refs/heads/main ]]; then
+                  if [[ "${{ github.ref }}" == 'refs/heads/main' ]]; then
                     docker rmi haozhealexzhang/cognitube-ai-service:latest || true
                   fi

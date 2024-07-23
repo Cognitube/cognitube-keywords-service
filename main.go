@@ -11,7 +11,7 @@ import (
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8082"
+		port = "8089"
 	}
 
 	azure.RegisterCallback(env.GetInstance().ApplicationCallbackUrl)
