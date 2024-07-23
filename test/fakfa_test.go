@@ -2,7 +2,7 @@ package test
 
 import (
 	"cognitube.com/keywords-service/publish"
-	"cognitube.com/keywords-service/transcription"
+	"cognitube.com/keywords-service/result"
 	"context"
 	"github.com/segmentio/kafka-go"
 	"os"
@@ -22,10 +22,11 @@ func TestTranscriptionResultPublisher_PublishTranscriptionResult(t *testing.T) {
 	os.Setenv("APPLICATION_KAFKA_TOPIC", "test")
 
 	p := publish.NewKafkaTranscriptionPublisher()
-	err := p.PublishTranscriptionResult(&transcription.TranscriptionResult{
-		ID:      "test",
-		Text:    "test message",
-		FileUrl: "test url",
+	err := p.PublishTranscriptionResult(&result.Result{
+		Success:       true,
+		VideoID:       "test",
+		TranscriptURL: "test url to transcript",
+		KeywordsURL:   "test url to keywords",
 	})
 	if err != nil {
 		t.Error(err)

@@ -1,19 +1,22 @@
 package test
 
 import (
+	"cognitube.com/keywords-service/azure"
 	"cognitube.com/keywords-service/transcription"
 	"fmt"
 	"testing"
 )
 
-var a = transcription.AzureClient{
-	ApiKey:        "HIDE_THIS_BEFORE_COMMITTING_TO_GITHUB",
-	BatchTransURL: "https://eastus.api.cognitive.microsoft.com/speechtotext/v3.1/transcriptions",
+var a = transcription.AzureTranscriber{
+	SpeechClient: azure.SpeechClient{
+		ApiKey:        "HIDE_THIS_BEFORE_COMMITTING_TO_GITHUB",
+		BatchTransURL: "https://eastus.api.cognitive.microsoft.com/speechtotext/v3.1/transcriptions",
+	},
 }
 
 func TestAzureClient_GetJobIDFromSelfURL(t *testing.T) {
 	url := "https://eastus.api.cognitive.microsoft.com/speechtotext/v3.1/transcriptions/04e8e911-fe79-439a-92df-23510a39beef"
-	id := a.GetJobIDFromSelfURL(url)
+	id := azure.GetJobIDFromSelfURL(url)
 	expected := "04e8e911-fe79-439a-92df-23510a39beef"
 	if id != expected {
 		t.Errorf("Expected %s, got %s", expected, id)

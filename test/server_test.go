@@ -4,37 +4,11 @@ import (
 	"context"
 	"github.com/carlmjohnson/requests"
 	"github.com/segmentio/kafka-go"
-	"net/http"
 	"testing"
 )
 
-// Step 0: Start the server by running the main.go file with environment variables set
-
-func RegisterCallback(t *testing.T) {
-	// This will send a POST request to the server to register a callback
-	var body = struct {
-		Url string `json:"url"`
-	}{
-		Url: "http://localhost:8848/static/test.mp3",
-	}
-	err := requests.URL("http://localhost:8082/api/v1/callback").
-		Method("POST").
-		BodyJSON(body).
-		Fetch(context.Background())
-	if err != nil {
-		t.Error(err)
-		return
-	}
-}
-
-// Step 1: Start a file server on port 8848 using the static directory to /static
-func TestFileServer(t *testing.T) {
-	// This will start a file server on port 8848 using the static directory to /static
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	http.ListenAndServe(":8848", nil)
-}
-
-// Step 2: Listen kafka messages to display the final result
+// Step 0: Start the server by compile and run main.go
+// Step 1: Listen kafka messages to display the final result
 func TestKafkaConsumer(t *testing.T) {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:   []string{"localhost:9092"},
@@ -53,24 +27,64 @@ func TestKafkaConsumer(t *testing.T) {
 	r.Close()
 }
 
-// Step 3: send a POST request to the server to create a transcription
-func TestAll(t *testing.T) {
-	var body = struct {
-		AudioURL    string `json:"audio_url"`
-		DisplayName string `json:"display_name"`
-	}{
-		AudioURL:    "http://localhost:8848/static/test.mp3",
-		DisplayName: "test",
-	}
-	var id string
-	err := requests.URL("http://localhost:8082/api/v1/transcription/create").
-		Method("POST").
-		BodyJSON(body).
-		ToString(&id).
-		Fetch(context.Background())
+// Step 2: send a POST request to the server to create a transcription
+func TestNoConversation(t *testing.T) {
+	audioUrl := "https://cognitube.blob.core.windows.net/audio-container/noconversation.mp3"
+	videoID := "test-non-conversation-video-id"
+	id, err := RequestLocal(audioUrl, videoID)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	t.Log(id)
+}
+
+func TestShort(t *testing.T) {
+	audioUrl := "https://cognitube.blob.core.windows.net/audio-container/1720453568685-audio_9cede306-a9ea-4733-b27c-7097f3e89a31.oga"
+	videoID := "test-short-video-id"
+	id, err := RequestLocal(audioUrl, videoID)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(id)
+}
+
+func TestLong(t *testing.T) {
+	audioUrl := "https://cognitube.blob.core.windows.net/audio-container/1720458538777-audio_419fa396-d881-466e-b327-df94de0fc926.oga"
+	videoID := "test-long-video-id"
+	id, err := RequestLocal(audioUrl, videoID)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(id)
+
+}
+
+func RequestLocal(audioUrl, videoId string) (string, error) {
+	var id string
+	err := requests.URL("http://localhost:8082/api/v1/transcription/create").
+		Method("POST").
+		BodyJSON(struct {
+			AudioURL string `json:"audioUrl"`
+			VideoID  string `json:"videoId"`
+		}{AudioURL: audioUrl, VideoID: videoId}).
+		ToString(&id).
+		Fetch(context.Background())
+	return id, err
+}
+
+// Optional: simulate the callback from the server
+func TestCallback(t *testing.T) {
+	err := requests.URL("http://localhost:8082/api/v1/callback").
+		Method("POST").
+		BodyJSON(struct {
+			Self string `json:"self"`
+		}{Self: "https://eastus.api.cognitive.microsoft.com/speechtotext/v3.1/transcriptions/04e8e911-fe79-439a-92df-23510a39beef"}).
+		Fetch(context.Background())
+	if err != nil {
+		t.Error(err)
+		return
+	}
 }

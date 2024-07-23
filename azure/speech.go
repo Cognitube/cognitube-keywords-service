@@ -1,0 +1,93 @@
+package azure
+
+import (
+	"context"
+	"github.com/carlmjohnson/requests"
+	"github.com/tidwall/gjson"
+	"net/http"
+	"strings"
+)
+
+func GetJobIDFromSelfURL(url string) string {
+	if !strings.Contains(url, "/") {
+		return ""
+	}
+	return url[strings.LastIndex(url, "/")+1:]
+}
+
+type ISpeechClient interface {
+	GetAllTranscriptionFileURLs(jobId string) ([]string, error)
+	GetTranscriptionFileText(fileUrl string) (string, error)
+	RegisterCallback(callbackUrl string) error
+}
+
+type SpeechClient struct {
+	ISpeechClient
+	BatchTransURL string
+	ApiKey        string
+}
+
+func (c *SpeechClient) GetAllTranscriptionFileURLs(jobId string) ([]string, error) {
+	var buffer string
+	err := requests.
+		URL(c.BatchTransURL+"/"+jobId+"/files").
+		Method(http.MethodGet).
+		Header("Ocp-Apim-Subscription-Key", c.ApiKey).
+		ToString(&buffer).
+		Fetch(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	arr := gjson.Get(buffer, "values.#.links.contentUrl").Array()
+	res := make([]string, len(arr))
+	for i := range arr {
+		res[i] = arr[i].String()
+	}
+	return res, nil
+}
+
+func (c *SpeechClient) GetTranscriptionFileText(fileUrl string) (string, error) {
+	var buffer string
+	err := requests.
+		URL(fileUrl).
+		Method(http.MethodGet).
+		Header("Ocp-Apim-Subscription-Key", c.ApiKey).
+		ToString(&buffer).
+		Fetch(context.Background())
+	if err != nil {
+		return "", err
+	}
+	return gjson.Get(buffer, "combinedRecognizedPhrases.0.display").String(), nil
+}
+
+func (c *SpeechClient) CreateTranscription(fileUrl string, displayName string) (string, error) {
+	var buffer string
+
+	err := requests.
+		URL(c.BatchTransURL).
+		Method(http.MethodPost).
+		ContentType("application/json").
+		Header("Ocp-Apim-Subscription-Key", c.ApiKey).
+		BodyJSON(map[string]interface{}{
+			"contentUrls": []string{fileUrl},
+			"locale":      "en-US",
+			"displayName": displayName,
+			"model":       nil,
+			"properties": map[string]interface{}{
+				"diarizationEnabled":                    false,
+				"wordLevelTimestampsEnabled":            false,
+				"displayFormWordLevelTimestampsEnabled": false,
+				"punctuationMode":                       "DictatedAndAutomatic",
+				"profanityFilterMode":                   "Masked",
+			}}).
+		ToString(&buffer).
+		Fetch(context.Background())
+
+	if err != nil {
+		return "", err
+	}
+
+	url := gjson.Get(buffer, "self").String()
+	return GetJobIDFromSelfURL(url), nil
+}

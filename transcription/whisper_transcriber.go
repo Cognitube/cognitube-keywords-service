@@ -11,13 +11,13 @@ import (
 	"os"
 )
 
-type WhisperClient struct {
+type WhisperTranscriber struct {
 	apiKey     string
 	whisperUrl string
 }
 
-func NewWhisperClient() *WhisperClient {
-	return &WhisperClient{
+func NewWhisperClient() *WhisperTranscriber {
+	return &WhisperTranscriber{
 		apiKey:     env.GetInstance().OpenAIKey,
 		whisperUrl: env.GetInstance().WhisperUrl,
 	}
@@ -29,7 +29,7 @@ type WhisperResponse struct {
 	text  string
 }
 
-func (c *WhisperClient) Transcript(file *os.File) (string, error) {
+func (c *WhisperTranscriber) Transcript(file *os.File) (string, error) {
 	if !env.GetInstance().Debug {
 		defer os.Remove(file.Name())
 	}

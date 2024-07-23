@@ -20,17 +20,39 @@ func NewKeywordsHandler(service ICognitubeKeywordsService) *KeywordsHandler {
 	return &KeywordsHandler{Service: service}
 }
 
-func (h *KeywordsHandler) CallbackGet(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Callback GET request received")
-	token := r.URL.Query().Get("validationToken")
+func Home(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(token))
+	w.Write([]byte(`
+	/ - Home
+	/api/v1/get-keywords - [GET] Get keywords
+	/api/v1/transcription/create - [POST] Create transcription
+	`))
 }
 
 func (h *KeywordsHandler) CallbackPost(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Callback POST request received")
-	go h.Service.OnTranscriptionCallback(r)
+	fmt.Printf("Request Url: %s", r.URL.String())
+	fmt.Printf("Request Headers: %s", r.Header)
 
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	fmt.Println(string(body))
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	if len(body) == 0 {
+		// Register callback
+		token := r.URL.Query().Get("validationToken")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(token))
+		return
+	}
+
+	go h.Service.OnTranscriptionCallback(body)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("received"))
 }
@@ -38,8 +60,8 @@ func (h *KeywordsHandler) CallbackPost(w http.ResponseWriter, r *http.Request) {
 func (h *KeywordsHandler) CreateTranscription(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Create transcription request received")
 	var reqData struct {
-		AudioURL    string `json:"audio_url"`
-		DisplayName string `json:"display_name"`
+		AudioURL string `json:"audioUrl"`
+		VideoID  string `json:"videoId"`
 	}
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -55,7 +77,7 @@ func (h *KeywordsHandler) CreateTranscription(w http.ResponseWriter, r *http.Req
 		w.Write([]byte(err.Error()))
 		return
 	}
-	id, err := h.Service.CreateAsyncTranscription(reqData.AudioURL, reqData.DisplayName)
+	id, err := h.Service.CreateAsyncTranscription(reqData.AudioURL, reqData.VideoID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))

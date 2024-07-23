@@ -21,6 +21,7 @@ func NewGPTClient() *GPTClient {
 	}
 }
 
+// TODO: Add retry logic
 func (g *GPTClient) Describe(transcript string) (string, error) {
 	systemMessage := map[string]string{
 		"role":    "system",
