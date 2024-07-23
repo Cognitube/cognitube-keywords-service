@@ -40,8 +40,7 @@ func (p *KafkaPublisher) PublishProd(topic string, message []byte) error {
 	}
 	err := writer.WriteMessages(context.Background(),
 		kafka.Message{
-			Key:   []byte("Key-A"),
-			Value: []byte("Hello, Azure Event Hubs!"),
+			Value: message,
 		},
 	)
 

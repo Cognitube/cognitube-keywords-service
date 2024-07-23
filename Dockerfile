@@ -43,7 +43,7 @@ ENV AZURE_BLOB_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=cog
 ENV KAFKA_EVENTHUB_NAMESPACE=cognitube-kafka
 ENV KAFKA_EVENTHUB_NAME=cognitube
 ENV KAFKA_EVENTHUB_CONNECTION_STRING="Endpoint=sb://cognitube-kafka.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=l9+PMVbv8R4LuCtQlPo5x8PIE8jZqn8O4+AEhEMQoqA="
-ENV KAFKA_USERNAME=$ConnectionString
+ENV KAFKA_USERNAME=\$ConnectionString
 
 EXPOSE 8089
 
