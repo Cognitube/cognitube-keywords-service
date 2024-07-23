@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl/plain"
+	"log"
 	"strings"
 )
 
@@ -45,10 +46,15 @@ func (p *KafkaPublisher) PublishProd(topic string, message []byte) error {
 		},
 	)
 
+	if err != nil {
+		log.Println(err.Error())
+	}
+
 	return err
 }
 
 func (p *KafkaPublisher) Publish(topic string, message []byte) error {
+	log.Println("Try publish message to Kafka: " + string(message))
 	if !env.GetInstance().Debug {
 		return p.PublishProd(topic, message)
 	}
@@ -61,6 +67,10 @@ func (p *KafkaPublisher) Publish(topic string, message []byte) error {
 	err := w.WriteMessages(context.Background(), kafka.Message{
 		Value: message,
 	})
+
+	if err != nil {
+		log.Println(err.Error())
+	}
 	return err
 }
 

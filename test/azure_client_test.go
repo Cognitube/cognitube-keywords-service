@@ -3,7 +3,7 @@ package test
 import (
 	"cognitube.com/keywords-service/azure"
 	"cognitube.com/keywords-service/transcription"
-	"fmt"
+	"log"
 	"testing"
 )
 
@@ -37,7 +37,7 @@ func TestAzureClient_GetAllTranscriptionFileURLs(t *testing.T) {
 		if url == "" {
 			t.Error("Expected a non-empty URL, got empty")
 		}
-		fmt.Println(url)
+		log.Println(url)
 	}
 }
 
@@ -50,5 +50,5 @@ func TestAzureClient_GetTranscriptionFileText(t *testing.T) {
 	if text == "" {
 		t.Error("Expected a non-empty text, got empty")
 	}
-	fmt.Println(text)
+	log.Println(text)
 }

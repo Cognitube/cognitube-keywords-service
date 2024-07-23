@@ -1,7 +1,7 @@
 package server
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -20,7 +20,7 @@ func (c *CongitubeKeywordsServer) StartListening(port string) {
 
 	SetupRoutes(router, c.keywordsService)
 
-	fmt.Println("Server started at port ", port)
+	log.Println("Server started at port ", port)
 
 	http.ListenAndServe(":"+port, router)
 }
