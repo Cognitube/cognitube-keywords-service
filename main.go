@@ -14,7 +14,6 @@ func main() {
 		port = "8082"
 	}
 
-	// TODO: Register the callback before start the server
 	azure.RegisterCallback(env.GetInstance().ApplicationCallbackUrl)
 	keywordsServer := server.NewCongitubeKeywordsServer()
 	keywordsServer.StartListening(port)
