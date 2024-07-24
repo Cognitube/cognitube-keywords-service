@@ -22,7 +22,9 @@ func (b *BlobClient) UploadBlob(container string, blobName string, data []byte) 
 		log.Println("Failed to upload blob: ", err.Error())
 		return "", err
 	}
-	return fmt.Sprintf("%s%s/%s", b._client.URL(), container, blobName), err
+	blobUrl := fmt.Sprintf("%s%s/%s", b._client.URL(), container, blobName)
+	log.Println("Blob uploaded: ", blobUrl)
+	return blobUrl, err
 }
 
 func (b *BlobClient) UploadTranscript(filename, transcript string) (string, error) {
