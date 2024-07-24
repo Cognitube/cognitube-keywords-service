@@ -81,7 +81,7 @@ func TestCallback(t *testing.T) {
 		Method("POST").
 		BodyJSON(struct {
 			Self string `json:"self"`
-		}{Self: "https://eastus.api.cognitive.microsoft.com/speechtotext/v3.1/transcriptions/04e8e911-fe79-439a-92df-23510a39beef"}).
+		}{Self: "https://eastus.api.cognitive.microsoft.com/speechtotext/v3.1/transcriptions/2fe33d35-edac-4f84-99dd-dfc6badadc09"}).
 		Fetch(context.Background())
 	if err != nil {
 		t.Error(err)

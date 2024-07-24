@@ -140,7 +140,8 @@ func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
 	transUrl := ""
 	if transcript != "" && success {
 		log.Println("Publishing transcription result for job ID: ", id)
-		transUrl, _ = c.blobClient.UploadTranscript(id+".txt", transcript)
+		transUrl, err = c.blobClient.UploadTranscript(id+".txt", transcript)
+
 	}
 
 	keywordsUrl := ""

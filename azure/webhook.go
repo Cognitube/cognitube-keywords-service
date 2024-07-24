@@ -30,12 +30,17 @@ func RegisterCallback(url string) {
 		Description: "Automatically registered by AI Service",
 	}
 
-	requests.URL("https://eastus.api.cognitive.microsoft.com/speechtotext/v3.1/webhooks").
+	err := requests.URL("https://eastus.api.cognitive.microsoft.com/speechtotext/v3.1/webhooks").
 		Method("POST").
 		ContentType("application/json").
 		Header("Ocp-Apim-Subscription-Key", env.GetInstance().AzureKey).
 		BodyJSON(payload).
 		Fetch(context.Background())
+
+	if err != nil {
+		log.Println("Failed to register callback: ", err.Error())
+		return
+	}
 
 	log.Println("Callback Registered: ", url)
 }
