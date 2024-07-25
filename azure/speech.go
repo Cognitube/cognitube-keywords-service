@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/carlmjohnson/requests"
 	"github.com/tidwall/gjson"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -36,6 +37,7 @@ func (c *SpeechClient) GetAllTranscriptionFileURLs(jobId string) ([]string, erro
 		ToString(&buffer).
 		Fetch(context.Background())
 	if err != nil {
+		log.Println("Failed to get transcription files: ", err.Error())
 		return nil, err
 	}
 
@@ -56,6 +58,7 @@ func (c *SpeechClient) GetTranscriptionFileText(fileUrl string) (string, error) 
 		ToString(&buffer).
 		Fetch(context.Background())
 	if err != nil {
+		log.Println("Failed to get transcription file text: ", err.Error())
 		return "", err
 	}
 	return gjson.Get(buffer, "combinedRecognizedPhrases.0.display").String(), nil
@@ -85,6 +88,7 @@ func (c *SpeechClient) CreateTranscription(fileUrl string, displayName string) (
 		Fetch(context.Background())
 
 	if err != nil {
+		log.Println("Failed to create transcription: ", err.Error())
 		return "", err
 	}
 

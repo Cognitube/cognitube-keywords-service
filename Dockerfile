@@ -44,6 +44,8 @@ ENV KAFKA_EVENTHUB_NAMESPACE=cognitube-kafka
 ENV KAFKA_EVENTHUB_NAME=cognitube
 ENV KAFKA_EVENTHUB_CONNECTION_STRING="Endpoint=sb://cognitube-kafka.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=l9+PMVbv8R4LuCtQlPo5x8PIE8jZqn8O4+AEhEMQoqA="
 ENV KAFKA_USERNAME=\$ConnectionString
+ENV TRANSCRIPT_CONTAINER_NAME=transcript-container
+ENV KEYWORDS_CONTAINER_NAME=keywords-container
 
 EXPOSE 8089
 
