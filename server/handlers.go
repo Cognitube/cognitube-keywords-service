@@ -2,8 +2,8 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 )
@@ -20,7 +20,77 @@ func NewKeywordsHandler(service ICognitubeKeywordsService) *KeywordsHandler {
 	return &KeywordsHandler{Service: service}
 }
 
+func Home(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`
+	/ - Home
+	/api/v1/get-keywords - [GET] Get keywords
+	/api/v1/transcription/create - [POST] Create transcription
+	`))
+}
+
+func (h *KeywordsHandler) CallbackPost(w http.ResponseWriter, r *http.Request) {
+	log.Println("Callback POST request received")
+	log.Printf("Request Url: %s", r.URL.String())
+	log.Printf("Request Headers: %s", r.Header)
+
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	log.Println(string(body))
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	if len(body) == 0 {
+		// Register callback
+		token := r.URL.Query().Get("validationToken")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(token))
+		return
+	}
+
+	go h.Service.OnTranscriptionCallback(body)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("received"))
+}
+
+func (h *KeywordsHandler) CreateTranscription(w http.ResponseWriter, r *http.Request) {
+	log.Println("Create transcription request received")
+	var reqData struct {
+		AudioURL string `json:"audioUrl"`
+		VideoID  string `json:"videoId"`
+	}
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	err = json.Unmarshal(body, &reqData)
+	log.Printf("Received request: %+v\n", reqData)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	id, err := h.Service.CreateAsyncTranscription(reqData.AudioURL, reqData.VideoID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	log.Printf("Created transcription with ID: %s\n", id)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(id))
+}
+
 func (h *KeywordsHandler) GetKeywords(w http.ResponseWriter, r *http.Request) {
+	log.Println("Get keywords request received")
 	var requestData RequestData
 
 	if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
@@ -59,7 +129,7 @@ func (h *KeywordsHandler) GetKeywords(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("Downloaded and saved file: %+v\n", tempFile.Name())
+	log.Printf("Downloaded and saved file: %+v\n", tempFile.Name())
 
 	_, err = tempFile.Seek(0, io.SeekStart)
 	if err != nil {
@@ -73,6 +143,6 @@ func (h *KeywordsHandler) GetKeywords(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Done processing the audio file to keywords")
+	log.Println("Done processing the audio file to keywords")
 	w.Write([]byte(keywords))
 }

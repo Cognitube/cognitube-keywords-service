@@ -1,22 +1,36 @@
 package server
 
 import (
-	"cognitube.com/keywords-service/keydesc"
-	"cognitube.com/keywords-service/transcription"
 	"io"
+	"log"
 	"mime/multipart"
 	"os"
+	"strconv"
+
+	"cognitube.com/keywords-service/azure"
+	"cognitube.com/keywords-service/env"
+	"cognitube.com/keywords-service/keydesc"
+	"cognitube.com/keywords-service/publish"
+	"cognitube.com/keywords-service/result"
+	"cognitube.com/keywords-service/transcription"
+	"github.com/tidwall/gjson"
 )
 
 type CongnitubeKeywordsService struct {
-	descriptor  keydesc.KeywordsDescriptor
-	transcriber transcription.Transcriber
+	descriptor       keydesc.KeywordsDescriptor
+	transcriber      transcription.Transcriber
+	asyncTranscriber transcription.AsyncTranscriber
+	resultPublisher  publish.TranscriptionPublisher
+	blobClient       *azure.BlobClient
 }
 
 func NewCognitubeKeywordsService() ICognitubeKeywordsService {
 	return &CongnitubeKeywordsService{
-		descriptor:  keydesc.NewKeywordsDescriptor("gpt"),
-		transcriber: transcription.NewTranscriber("whisper"),
+		descriptor:       keydesc.NewKeywordsDescriptor("gpt"),
+		transcriber:      transcription.NewTranscriber("whisper"),
+		asyncTranscriber: transcription.NewAsyncTranscriberClient("azure"),
+		resultPublisher:  publish.NewKafkaTranscriptionPublisher(),
+		blobClient:       azure.NewBlobClient(),
 	}
 }
 
@@ -63,4 +77,95 @@ func (c *CongnitubeKeywordsService) GetKeyDescFromHttpAudioFile(multiFile multip
 		return "", err
 	}
 	return keywords, nil
+}
+
+func (c *CongnitubeKeywordsService) CreateAsyncTranscription(fileUrl string, videoID string) (string, error) {
+	id, err := c.asyncTranscriber.CreateTranscription(fileUrl, videoID)
+	if err != nil {
+		return "", err
+	}
+	PutTranscriptIDToVideoID(videoID, id)
+	return id, nil
+}
+
+var videoIDToTranscriptID = make(map[string]string)
+
+func PutTranscriptIDToVideoID(tid string, vio string) {
+	videoIDToTranscriptID[vio] = tid
+}
+
+func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
+	success := true
+	errStr := ""
+
+	url := gjson.GetBytes(payload, "self").String()
+	if url == "" {
+		success, errStr = false, "self URL not found in payload"
+	}
+
+	id := azure.GetJobIDFromSelfURL(url)
+	if id == "" {
+		success, errStr = false, "invalid self URL"
+	}
+
+	vid := PopVideoIDFromTranscriptID(id) // vid might be ""
+	log.Println("Find Transcription Job ID: ", id, " for Video ID: ", vid)
+
+	log.Println("Getting transcription result for job ID: ", id)
+	transcript, err := c.asyncTranscriber.OnTranscriptionCallback(id) // transcript might be ""
+	if err != nil {
+		success, errStr = false, err.Error()
+	}
+
+	retry := -1
+	desc := ""
+	for keydesc.ValidateKeywordsResult(desc) != true {
+		log.Println("Generating keywords description for job ID: ", id)
+		log.Println("Trying " + strconv.Itoa(retry+2) + " times")
+		desc, err = c.descriptor.Describe(transcript)
+		if err != nil {
+			success = false
+			errStr = err.Error()
+			break
+		}
+		retry++
+		if retry >= env.GetInstance().KeywordDescMaxRetry {
+			success = false
+			errStr = "Failed to generate keywords description (reached max retry)"
+			log.Printf("Failure reason for video %s: %s", vid, desc)
+			break
+		}
+	}
+
+	transUrl := ""
+	if transcript != "" && success {
+		log.Println("Publishing transcription result for job ID: ", id)
+		transUrl, err = c.blobClient.UploadTranscript(id+".txt", transcript)
+
+	}
+
+	keywordsUrl := ""
+	if desc != "" && success {
+		log.Println("Publishing keywords result for job ID: ", id)
+		keywordsUrl, _ = c.blobClient.UploadKeywords(id+".json", desc)
+	}
+
+	log.Println("Publishing final result for job ID: ", id)
+	c.resultPublisher.PublishTranscriptionResult(&result.Result{
+		Success:       success,
+		VideoID:       vid,
+		KeywordsURL:   keywordsUrl,
+		TranscriptURL: transUrl,
+		Error:         errStr,
+	})
+}
+
+func PopVideoIDFromTranscriptID(tid string) string {
+	vid := videoIDToTranscriptID[tid]
+	if vid == "" {
+		log.Println("No video ID found for transcript ID: ", tid)
+		return ""
+	}
+	delete(videoIDToTranscriptID, tid)
+	return vid
 }
