@@ -3,7 +3,10 @@ package test
 import (
 	"cognitube.com/keywords-service/azure"
 	"cognitube.com/keywords-service/transcription"
+	"encoding/json"
+	"io"
 	"log"
+	"os"
 	"testing"
 )
 
@@ -41,14 +44,29 @@ func TestAzureClient_GetAllTranscriptionFileURLs(t *testing.T) {
 	}
 }
 
-func TestAzureClient_GetTranscriptionFileText(t *testing.T) {
-	fileUrl := "https://spsvcprodeus.blob.core.windows.net/bestor-c6e3ae79-1b48-41bf-92ff-940bea3e5c2d/TranscriptionData/04e8e911-fe79-439a-92df-23510a39beef_0_0.json?skoid=50c6251a-ac54-47a3-9265-a1e4f84be9b9&sktid=33e01921-4d64-4f8c-a055-5bdaffd5e33d&skt=2024-07-19T06%3A05%3A55Z&ske=2024-07-24T06%3A10%3A55Z&sks=b&skv=2024-05-04&sv=2024-05-04&st=2024-07-19T06%3A05%3A55Z&se=2024-07-19T18%3A10%3A55Z&sr=b&sp=rl&sig=cr5Z3Ub3%2BQ2xunNPbvyW08aiqILhce5JMQbJEuFIEUU%3D"
-	text, err := a.GetTranscriptionFileText(fileUrl)
+func TestAdapter(t *testing.T) {
+	f, err := os.Open("azure_transcript.json")
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	if text == "" {
-		t.Error("Expected a non-empty text, got empty")
+	defer f.Close()
+	content, err := io.ReadAll(f)
+	if err != nil {
+		t.Fatal(err)
 	}
-	log.Println(text)
+	//t.Log(string(content))
+	var result transcription.AzureTranscriptResult
+	err = json.Unmarshal(content, &result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	//t.Log(result)
+
+	standardResult := transcription.ConvertAzureToStandard(result)
+	//t.Log(standardResult)
+	jsText, err := json.MarshalIndent(standardResult, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(jsText))
 }

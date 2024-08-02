@@ -1,6 +1,7 @@
 package azure
 
 import (
+	"bytes"
 	"context"
 	"github.com/carlmjohnson/requests"
 	"github.com/tidwall/gjson"
@@ -18,7 +19,7 @@ func GetJobIDFromSelfURL(url string) string {
 
 type ISpeechClient interface {
 	GetAllTranscriptionFileURLs(jobId string) ([]string, error)
-	GetTranscriptionFileText(fileUrl string) (string, error)
+	GetTranscriptionFileContent(fileUrl string) ([]byte, error)
 	RegisterCallback(callbackUrl string) error
 }
 
@@ -49,19 +50,19 @@ func (c *SpeechClient) GetAllTranscriptionFileURLs(jobId string) ([]string, erro
 	return res, nil
 }
 
-func (c *SpeechClient) GetTranscriptionFileText(fileUrl string) (string, error) {
-	var buffer string
+func (c *SpeechClient) GetTranscriptionFileContent(fileUrl string) ([]byte, error) {
+	var buffer bytes.Buffer
 	err := requests.
 		URL(fileUrl).
 		Method(http.MethodGet).
 		Header("Ocp-Apim-Subscription-Key", c.ApiKey).
-		ToString(&buffer).
+		ToBytesBuffer(&buffer).
 		Fetch(context.Background())
 	if err != nil {
 		log.Println("Failed to get transcription file text: ", err.Error())
-		return "", err
+		return nil, err
 	}
-	return gjson.Get(buffer, "combinedRecognizedPhrases.0.display").String(), nil
+	return buffer.Bytes(), nil
 }
 
 func (c *SpeechClient) CreateTranscription(fileUrl string, displayName string) (string, error) {

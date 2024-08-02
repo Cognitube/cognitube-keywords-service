@@ -1,6 +1,8 @@
 package server
 
 import (
+	"context"
+	"github.com/go-redis/redis/v8"
 	"io"
 	"log"
 	"mime/multipart"
@@ -84,14 +86,8 @@ func (c *CongnitubeKeywordsService) CreateAsyncTranscription(fileUrl string, vid
 	if err != nil {
 		return "", err
 	}
-	PutTranscriptIDToVideoID(videoID, id)
+	PutTranscriptIDToVideoID(id, videoID)
 	return id, nil
-}
-
-var videoIDToTranscriptID = make(map[string]string)
-
-func PutTranscriptIDToVideoID(tid string, vio string) {
-	videoIDToTranscriptID[vio] = tid
 }
 
 func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
@@ -140,7 +136,7 @@ func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
 	transUrl := ""
 	if transcript != "" && success {
 		log.Println("Publishing transcription result for job ID: ", id)
-		transUrl, err = c.blobClient.UploadTranscript(id+".txt", transcript)
+		transUrl, err = c.blobClient.UploadTranscript(id+".json", transcript)
 
 	}
 
@@ -160,12 +156,41 @@ func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
 	})
 }
 
-func PopVideoIDFromTranscriptID(tid string) string {
-	vid := videoIDToTranscriptID[tid]
-	if vid == "" {
-		log.Println("No video ID found for transcript ID: ", tid)
-		return ""
+func GetRedisOptions() *redis.Options {
+	if env.GetInstance().Debug {
+		option := &redis.Options{
+			Addr:     "localhost:6379",
+			Password: "",
+			DB:       0,
+		}
+		return option
 	}
-	delete(videoIDToTranscriptID, tid)
+	option, err := redis.ParseURL(env.GetInstance().RedisConnectionString)
+	if err != nil {
+		log.Println("Failed to parse redis connection string")
+	}
+	return option
+}
+
+func PutTranscriptIDToVideoID(tid string, vid string) {
+	log.Println("Putting transcript ID to video ID mapping, ", tid, " -> ", vid)
+	option := GetRedisOptions()
+	client := redis.NewClient(option)
+	defer client.Close()
+	err := client.Set(context.Background(), tid, vid, 0).Err()
+	if err != nil {
+		log.Println("Failed to set transcript ID to video ID mapping")
+	}
+}
+
+func PopVideoIDFromTranscriptID(tid string) string {
+	log.Println("Popping video ID from transcript ID: ", tid)
+	option := GetRedisOptions()
+	client := redis.NewClient(option)
+	defer client.Close()
+	vid, err := client.Get(context.Background(), tid).Result()
+	if err != nil {
+		log.Println("Failed to get video ID for transcript ID: ", tid)
+	}
 	return vid
 }

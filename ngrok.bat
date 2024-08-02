@@ -1,0 +1,1 @@
+.\ngrok.exe http 8082 --domain moccasin-known-doe.ngrok-free.app
