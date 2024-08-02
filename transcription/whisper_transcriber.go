@@ -3,7 +3,6 @@ package transcription
 import (
 	"bytes"
 	"cognitube.com/keywords-service/env"
-	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -79,38 +78,15 @@ func (c *WhisperTranscriber) Transcript(file *os.File) (string, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("received non-ok status from API: %d", resp.StatusCode)
+	}
+
 	// Read and decode the response
 	responseData, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("error reading response: %w", err)
 	}
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("received non-ok status from API: %d; response: %s", resp.StatusCode, responseData)
-	}
 
-	// Extract "segments" field as a JSON string
-	var responseMap map[string]json.RawMessage
-	if err := json.Unmarshal(responseData, &responseMap); err != nil {
-		return "", fmt.Errorf("error parsing JSON response: %w", err)
-	}
-
-	rawMsg, exists := responseMap["text"]
-	if !exists {
-		return "", fmt.Errorf("segments field not found")
-	}
-
-	//var transcriptObj map[string]interface{}
-	//if err := json.Unmarshal(responseData, &transcriptObj); err != nil {
-	//	return "", fmt.Errorf("error parsing transcript: %w", err)
-	//}
-	//
-	//extractedTranscript, ok := transcriptObj["segments"].(string)
-	//if !ok {
-	//	if errorMsg, ok := transcriptObj["error"].(map[string]interface{}); ok {
-	//		return "", fmt.Errorf("error in transcript: %s", errorMsg["message"])
-	//	}
-	//	return "", fmt.Errorf("segments field not found or invalid")
-	//}
-
-	return string(rawMsg), nil
+	return string(responseData), nil
 }

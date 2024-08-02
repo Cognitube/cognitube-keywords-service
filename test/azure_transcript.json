@@ -1,0 +1,187 @@
+{
+  "source": "https://26c9-4-2-14-58.ngrok-free.app/static/test.mp3",
+  "timestamp": "2024-07-10T18:30:03Z",
+  "durationInTicks": 542700000,
+  "duration": "PT54.27S",
+  "combinedRecognizedPhrases": [
+    {
+      "channel": 0,
+      "lexical": "this video is brought to you by captivating history joan of arc or jean darc as she is known in france remains an inspirational and controversial figure six hundred years after her birth saint or heretic touched by the grace of god or a tragically delusional young woman even while alive these points of view were hotly debated the france into which jean was born in fourteen twelve was divided there was a relative peace in the long time war with england however internal unrest was caused by the feud between two royal factions who sat on the regency council the armanyacs and the burgundians the council was headed by queen isabel the wife of king charles the sixth he was also known as charles the man due to periods of psychosis which had begun in the early thirteen nineties",
+      "itn": "this video is brought to you by captivating history joan of arc or jean darc as she is known in france remains an inspirational and controversial figure 600 years after her birth st or heretic touched by the grace of god or a tragically delusional young woman even while alive these points of view were hotly debated the france into which jean was born in 1412 was divided there was a relative peace in the long time war with england however internal unrest was caused by the feud between 2 royal factions who sat on the regency council the armanyacs and the burgundians the council was headed by queen isabel the wife of king charles the 6th he was also known as charles the man due to periods of psychosis which had begun in the early 1390s",
+      "maskedITN": "This video is brought to you by Captivating History Joan of Arc or Jean Darc as she is known in France remains an inspirational and controversial figure 600 years after her birth St or Heretic touched by the grace of God or a tragically delusional young woman Even while alive these points of view were hotly debated The France into which Jean was born in 1412 was divided There was a relative peace in the long time war with England However internal unrest was caused by the feud between 2 royal factions who sat on the Regency council the Armanyacs and the Burgundians The council was headed by Queen Isabel the wife of King Charles the 6th He was also known as Charles the Man due to periods of psychosis which had begun in the early 1390s",
+      "display": "This video is brought to you by Captivating History. Joan of Arc, or Jean Darc as she is known in France, remains an inspirational and controversial figure 600 years after her birth. St. or Heretic, touched by the grace of God or a tragically delusional young woman. Even while alive, these points of view were hotly debated. The France into which Jean was born in 1412 was divided. There was a relative peace in the long time war with England. However, internal unrest was caused by the feud between 2 royal factions who sat on the Regency council, the Armanyacs and the Burgundians. The council was headed by Queen Isabel, the wife of King Charles the 6th. He was also known as Charles the Man due to periods of psychosis which had begun in the early 1390s."
+    }
+  ],
+  "recognizedPhrases": [
+    {
+      "recognitionStatus": "Success",
+      "channel": 0,
+      "offset": "PT0.44S",
+      "duration": "PT3.08S",
+      "offsetInTicks": 4400000,
+      "durationInTicks": 30800000,
+      "nBest": [
+        {
+          "confidence": 0.95075303,
+          "lexical": "this video is brought to you by captivating history",
+          "itn": "this video is brought to you by captivating history",
+          "maskedITN": "This video is brought to you by Captivating History",
+          "display": "This video is brought to you by Captivating History."
+        }
+      ]
+    },
+    {
+      "recognitionStatus": "Success",
+      "channel": 0,
+      "offset": "PT4.88S",
+      "duration": "PT8.76S",
+      "offsetInTicks": 48800000,
+      "durationInTicks": 87600000,
+      "nBest": [
+        {
+          "confidence": 0.8728952,
+          "lexical": "joan of arc or jean darc as she is known in france remains an inspirational and controversial figure six hundred years after her birth",
+          "itn": "joan of arc or jean darc as she is known in france remains an inspirational and controversial figure 600 years after her birth",
+          "maskedITN": "Joan of Arc or Jean Darc as she is known in France remains an inspirational and controversial figure 600 years after her birth",
+          "display": "Joan of Arc, or Jean Darc as she is known in France, remains an inspirational and controversial figure 600 years after her birth."
+        }
+      ]
+    },
+    {
+      "recognitionStatus": "Success",
+      "channel": 0,
+      "offset": "PT14.32S",
+      "duration": "PT0.48S",
+      "offsetInTicks": 143200000,
+      "durationInTicks": 4800000,
+      "nBest": [
+        {
+          "confidence": 0.6855273,
+          "lexical": "saint",
+          "itn": "st",
+          "maskedITN": "St",
+          "display": "St."
+        }
+      ]
+    },
+    {
+      "recognitionStatus": "Success",
+      "channel": 0,
+      "offset": "PT15S",
+      "duration": "PT5.4S",
+      "offsetInTicks": 150000000,
+      "durationInTicks": 54000000,
+      "nBest": [
+        {
+          "confidence": 0.9144798,
+          "lexical": "or heretic touched by the grace of god or a tragically delusional young woman",
+          "itn": "or heretic touched by the grace of god or a tragically delusional young woman",
+          "maskedITN": "or Heretic touched by the grace of God or a tragically delusional young woman",
+          "display": "or Heretic, touched by the grace of God or a tragically delusional young woman."
+        }
+      ]
+    },
+    {
+      "recognitionStatus": "Success",
+      "channel": 0,
+      "offset": "PT21.28S",
+      "duration": "PT3.36S",
+      "offsetInTicks": 212800000,
+      "durationInTicks": 33600000,
+      "nBest": [
+        {
+          "confidence": 0.9505813,
+          "lexical": "even while alive these points of view were hotly debated",
+          "itn": "even while alive these points of view were hotly debated",
+          "maskedITN": "Even while alive these points of view were hotly debated",
+          "display": "Even while alive, these points of view were hotly debated."
+        }
+      ]
+    },
+    {
+      "recognitionStatus": "Success",
+      "channel": 0,
+      "offset": "PT26.08S",
+      "duration": "PT3.68S",
+      "offsetInTicks": 260800000,
+      "durationInTicks": 36800000,
+      "nBest": [
+        {
+          "confidence": 0.89688754,
+          "lexical": "the france into which jean was born in fourteen twelve was divided",
+          "itn": "the france into which jean was born in 1412 was divided",
+          "maskedITN": "The France into which Jean was born in 1412 was divided",
+          "display": "The France into which Jean was born in 1412 was divided."
+        }
+      ]
+    },
+    {
+      "recognitionStatus": "Success",
+      "channel": 0,
+      "offset": "PT30.36S",
+      "duration": "PT2.76S",
+      "offsetInTicks": 303600000,
+      "durationInTicks": 27600000,
+      "nBest": [
+        {
+          "confidence": 0.8725282,
+          "lexical": "there was a relative peace in the long time war with england",
+          "itn": "there was a relative peace in the long time war with england",
+          "maskedITN": "There was a relative peace in the long time war with England",
+          "display": "There was a relative peace in the long time war with England."
+        }
+      ]
+    },
+    {
+      "recognitionStatus": "Success",
+      "channel": 0,
+      "offset": "PT33.52S",
+      "duration": "PT8.8S",
+      "offsetInTicks": 335200000,
+      "durationInTicks": 88000000,
+      "nBest": [
+        {
+          "confidence": 0.9118019,
+          "lexical": "however internal unrest was caused by the feud between two royal factions who sat on the regency council the armanyacs and the burgundians",
+          "itn": "however internal unrest was caused by the feud between 2 royal factions who sat on the regency council the armanyacs and the burgundians",
+          "maskedITN": "However internal unrest was caused by the feud between 2 royal factions who sat on the Regency council the Armanyacs and the Burgundians",
+          "display": "However, internal unrest was caused by the feud between 2 royal factions who sat on the Regency council, the Armanyacs and the Burgundians."
+        }
+      ]
+    },
+    {
+      "recognitionStatus": "Success",
+      "channel": 0,
+      "offset": "PT43S",
+      "duration": "PT4.24S",
+      "offsetInTicks": 430000000,
+      "durationInTicks": 42400000,
+      "nBest": [
+        {
+          "confidence": 0.92499024,
+          "lexical": "the council was headed by queen isabel the wife of king charles the sixth",
+          "itn": "the council was headed by queen isabel the wife of king charles the 6th",
+          "maskedITN": "The council was headed by Queen Isabel the wife of King Charles the 6th",
+          "display": "The council was headed by Queen Isabel, the wife of King Charles the 6th."
+        }
+      ]
+    },
+    {
+      "recognitionStatus": "Success",
+      "channel": 0,
+      "offset": "PT47.92S",
+      "duration": "PT5.96S",
+      "offsetInTicks": 479200000,
+      "durationInTicks": 59600000,
+      "nBest": [
+        {
+          "confidence": 0.8911003,
+          "lexical": "he was also known as charles the man due to periods of psychosis which had begun in the early thirteen nineties",
+          "itn": "he was also known as charles the man due to periods of psychosis which had begun in the early 1390s",
+          "maskedITN": "He was also known as Charles the Man due to periods of psychosis which had begun in the early 1390s",
+          "display": "He was also known as Charles the Man due to periods of psychosis which had begun in the early 1390s."
+        }
+      ]
+    }
+  ]
+}

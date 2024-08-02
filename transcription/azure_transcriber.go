@@ -3,6 +3,7 @@ package transcription
 import (
 	"cognitube.com/keywords-service/azure"
 	"cognitube.com/keywords-service/env"
+	"encoding/json"
 )
 
 type AzureTranscriber struct {
@@ -23,12 +24,23 @@ func (a *AzureTranscriber) OnTranscriptionCallback(id string) (string, error) {
 	transcriptionJsonURL := listFileResp[0]
 
 	// GET the file and extract the text
-	text, err := a.GetTranscriptionFileText(transcriptionJsonURL)
+	content, err := a.GetTranscriptionFileContent(transcriptionJsonURL)
 	if err != nil {
 		return "", err
 	}
 
-	return text, nil
+	var result AzureTranscriptResult
+	err = json.Unmarshal(content, &result)
+	if err != nil {
+		return "", err
+	}
+
+	standard := ConvertAzureToStandard(result)
+	text, err := json.MarshalIndent(standard, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(text), nil
 }
 
 func NewAzureClient() AsyncTranscriber {
