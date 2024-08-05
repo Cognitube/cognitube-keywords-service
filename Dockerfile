@@ -46,7 +46,7 @@ ENV KAFKA_EVENTHUB_CONNECTION_STRING="Endpoint=sb://cognitube-kafka.servicebus.w
 ENV KAFKA_USERNAME=\$ConnectionString
 ENV TRANSCRIPT_CONTAINER_NAME=transcript-container
 ENV KEYWORDS_CONTAINER_NAME=keywords-container
-ENV REDIS_CONNECTION_STRING="cognitube-redis-dev.redis.cache.windows.net:6380,password=diQfY2IYUyj3igh5zu1kLz0vc2uXNMruxAzCaIVwr10=,ssl=True,abortConnect=False"
+ENV REDIS_CONNECTION_STRING="rediss://:diQfY2IYUyj3igh5zu1kLz0vc2uXNMruxAzCaIVwr10=@cognitube-redis-dev.redis.cache.windows.net:6380/0"
 
 EXPOSE 8089
 
