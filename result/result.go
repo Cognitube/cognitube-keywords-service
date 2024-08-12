@@ -6,4 +6,5 @@ type Result struct {
 	VideoID       string `json:"videoId"`
 	KeywordsURL   string `json:"keywordsUrl"`
 	TranscriptURL string `json:"transcriptUrl"`
+	SubtitleURL   string `json:"subtitleUrl"`
 }

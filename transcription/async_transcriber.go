@@ -2,7 +2,7 @@ package transcription
 
 type AsyncTranscriber interface {
 	CreateTranscription(fileUrl string, displayName string) (string, error)
-	OnTranscriptionCallback(id string) (string, error)
+	OnTranscriptionCallback(id string) (TranscriptResult, error)
 }
 
 func NewAsyncTranscriberClient(name string) AsyncTranscriber {

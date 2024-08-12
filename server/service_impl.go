@@ -113,12 +113,15 @@ func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
 		success, errStr = false, err.Error()
 	}
 
+	standard := transcript.ToStandard()
+	subtitle := standard.ToJson()
+
 	retry := -1
 	desc := ""
 	for keydesc.ValidateKeywordsResult(desc) != true {
 		log.Println("Generating keywords description for job ID: ", id)
 		log.Println("Trying " + strconv.Itoa(retry+2) + " times")
-		desc, err = c.descriptor.Describe(transcript)
+		desc, err = c.descriptor.Describe(subtitle)
 		if err != nil {
 			success = false
 			errStr = err.Error()
@@ -134,16 +137,21 @@ func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
 	}
 
 	transUrl := ""
-	if transcript != "" && success {
+	if transcript.GetText() != "" && success {
 		log.Println("Publishing transcription result for job ID: ", id)
-		transUrl, err = c.blobClient.UploadTranscript(id+".json", transcript)
-
+		transUrl, err = c.blobClient.UploadTranscript(id+".txt", transcript.GetText())
 	}
 
 	keywordsUrl := ""
 	if desc != "" && success {
 		log.Println("Publishing keywords result for job ID: ", id)
 		keywordsUrl, _ = c.blobClient.UploadKeywords(id+".json", desc)
+	}
+
+	subtitleUrl := ""
+	if subtitle != "" && success {
+		log.Println("Publishing subtitle for job ID: ", id)
+		subtitleUrl, err = c.blobClient.UploadSubtitle(id+".json", subtitle)
 	}
 
 	log.Println("Publishing final result for job ID: ", id)
@@ -153,6 +161,7 @@ func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
 		KeywordsURL:   keywordsUrl,
 		TranscriptURL: transUrl,
 		Error:         errStr,
+		SubtitleURL:   subtitleUrl,
 	})
 }
 
