@@ -1,7 +1,7 @@
-package test
+package keywords_service
 
 import (
-	"cognitube.com/keywords-service/keydesc"
+	"cognitube.com/keywords-service/server/service/keywords/keydesc"
 	"os"
 	"testing"
 )

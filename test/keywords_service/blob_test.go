@@ -1,7 +1,7 @@
-package test
+package keywords_service
 
 import (
-	"cognitube.com/keywords-service/azure"
+	"cognitube.com/keywords-service/dal/azure"
 	"log"
 	"testing"
 )

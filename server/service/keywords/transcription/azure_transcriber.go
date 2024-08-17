@@ -1,7 +1,7 @@
 package transcription
 
 import (
-	"cognitube.com/keywords-service/azure"
+	"cognitube.com/keywords-service/dal/azure"
 	"cognitube.com/keywords-service/env"
 	"encoding/json"
 )
