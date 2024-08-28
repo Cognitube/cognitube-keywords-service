@@ -3,6 +3,7 @@ package keywords
 import (
 	azure2 "cognitube.com/keywords-service/dal/azure"
 	"cognitube.com/keywords-service/dal/mq"
+	myredis "cognitube.com/keywords-service/dal/redis"
 	keydesc2 "cognitube.com/keywords-service/server/service/keywords/keydesc"
 	"cognitube.com/keywords-service/server/service/keywords/result"
 	transcription2 "cognitube.com/keywords-service/server/service/keywords/transcription"
@@ -196,7 +197,7 @@ func PutTranscriptIDToVideoID(tid string, vid string) {
 	option := GetRedisOptions()
 	client := redis.NewClient(option)
 	defer client.Close()
-	err := client.Set(context.Background(), env.RedisKeyTranscriptPrefix+tid, vid, 5*time.Hour).Err()
+	err := client.Set(context.Background(), myredis.GetTranscriptRedisKey(tid), vid, 5*time.Hour).Err()
 	if err != nil {
 		log.Println("Failed to set transcript ID to video ID mapping")
 	}
@@ -208,13 +209,13 @@ func PopVideoIDFromTranscriptID(tid string) string {
 	client := redis.NewClient(option)
 	defer client.Close()
 
-	vid, err := client.Get(context.Background(), env.RedisKeyTranscriptPrefix+tid).Result()
+	vid, err := client.Get(context.Background(), myredis.GetTranscriptRedisKey(tid)).Result()
 	if err != nil {
 		log.Println("Failed to get video ID for transcript ID: ", tid)
 	}
 
 	// Delete the key-value pair after retrieving it
-	err = client.Del(context.Background(), env.RedisKeyTranscriptPrefix+tid).Err()
+	err = client.Del(context.Background(), myredis.GetTranscriptRedisKey(tid)).Err()
 	if err != nil {
 		log.Println("Failed to delete video ID for transcript ID: ", tid)
 	}
