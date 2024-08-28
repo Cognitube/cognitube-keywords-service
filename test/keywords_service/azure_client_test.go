@@ -1,8 +1,8 @@
-package test
+package keywords_service
 
 import (
-	"cognitube.com/keywords-service/azure"
-	"cognitube.com/keywords-service/transcription"
+	"cognitube.com/keywords-service/dal/azure"
+	transcription2 "cognitube.com/keywords-service/server/service/keywords/transcription"
 	"encoding/json"
 	"io"
 	"log"
@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-var a = transcription.AzureTranscriber{
+var a = transcription2.AzureTranscriber{
 	SpeechClient: azure.SpeechClient{
 		ApiKey:        "HIDE_THIS_BEFORE_COMMITTING_TO_GITHUB",
 		BatchTransURL: "https://eastus.api.cognitive.microsoft.com/speechtotext/v3.1/transcriptions",
@@ -55,14 +55,14 @@ func TestAdapter(t *testing.T) {
 		t.Fatal(err)
 	}
 	//t.Log(string(content))
-	var result transcription.AzureTranscriptResult
+	var result transcription2.AzureTranscriptResult
 	err = json.Unmarshal(content, &result)
 	if err != nil {
 		t.Fatal(err)
 	}
 	//t.Log(result)
 
-	standardResult := transcription.ConvertAzureToStandard(result)
+	standardResult := transcription2.ConvertAzureToStandard(result)
 	//t.Log(standardResult)
 	jsText, err := json.MarshalIndent(standardResult, "", "  ")
 	if err != nil {

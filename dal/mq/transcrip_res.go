@@ -1,8 +1,8 @@
-package publish
+package mq
 
 import (
 	"cognitube.com/keywords-service/env"
-	"cognitube.com/keywords-service/result"
+	"cognitube.com/keywords-service/server/service/keywords/result"
 	"encoding/json"
 )
 

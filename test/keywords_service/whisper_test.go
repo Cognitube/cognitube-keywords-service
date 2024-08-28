@@ -1,7 +1,7 @@
-package test
+package keywords_service
 
 import (
-	"cognitube.com/keywords-service/transcription"
+	"cognitube.com/keywords-service/server/service/keywords/transcription"
 	"os"
 	"testing"
 )

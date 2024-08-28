@@ -44,6 +44,7 @@ jobs:
                   tags: ${{ secrets.AZURE_REGISTRY_NAME }}/cognitube-ai-service:${{ steps.prep.outputs.tag }}
 
             - name: List Docker images after build
+
               run: docker images
 
             - name: Clean up Post Run

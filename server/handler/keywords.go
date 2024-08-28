@@ -1,6 +1,7 @@
-package server
+package handler
 
 import (
+	"cognitube.com/keywords-service/server/service/keywords"
 	"encoding/json"
 	"io"
 	"log"
@@ -9,15 +10,15 @@ import (
 )
 
 type KeywordsHandler struct {
-	Service ICognitubeKeywordsService
+	keywordService keywords.ICognitubeKeywordsService
 }
 
 type RequestData struct {
 	URL string `json:"url"`
 }
 
-func NewKeywordsHandler(service ICognitubeKeywordsService) *KeywordsHandler {
-	return &KeywordsHandler{Service: service}
+func NewKeywordsHandler(service keywords.ICognitubeKeywordsService) *KeywordsHandler {
+	return &KeywordsHandler{keywordService: service}
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +53,7 @@ func (h *KeywordsHandler) CallbackPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go h.Service.OnTranscriptionCallback(body)
+	go h.keywordService.OnTranscriptionCallback(body)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("received"))
 }
@@ -77,7 +78,7 @@ func (h *KeywordsHandler) CreateTranscription(w http.ResponseWriter, r *http.Req
 		w.Write([]byte(err.Error()))
 		return
 	}
-	id, err := h.Service.CreateAsyncTranscription(reqData.AudioURL, reqData.VideoID)
+	id, err := h.keywordService.CreateAsyncTranscription(reqData.AudioURL, reqData.VideoID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
@@ -137,7 +138,7 @@ func (h *KeywordsHandler) GetKeywords(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	keywords, err := h.Service.GetKeyDescFromHttpAudioFile(tempFile)
+	keywords, err := h.keywordService.GetKeyDescFromHttpAudioFile(tempFile)
 	if err != nil {
 		http.Error(w, "Error getting keywords: "+err.Error(), http.StatusInternalServerError)
 		return

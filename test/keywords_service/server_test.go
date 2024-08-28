@@ -1,4 +1,4 @@
-package test
+package keywords_service
 
 import (
 	"context"

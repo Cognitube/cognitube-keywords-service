@@ -1,6 +1,7 @@
 package transcription
 
 import (
+	"encoding/json"
 	"log"
 	"regexp"
 	"strconv"
@@ -12,10 +13,23 @@ type Segment struct {
 	Text  string  `json:"text"`
 }
 
+type TranscriptResult interface {
+	ToStandard() StandardTranscriptResult
+	GetText() string
+}
+
 type StandardTranscriptResult struct {
 	Duration float64   `json:"duration"`
 	Text     string    `json:"text"`
 	Segments []Segment `json:"segments"`
+}
+
+func (s StandardTranscriptResult) ToJson() string {
+	text, err := json.MarshalIndent(s, "", "  ")
+	if err != nil {
+		log.Println("error marshalling to json", err)
+	}
+	return string(text)
 }
 
 type AzureTranscriptResult struct {
@@ -32,12 +46,21 @@ type AzureTranscriptResult struct {
 	}
 }
 
+func (a AzureTranscriptResult) ToStandard() StandardTranscriptResult {
+	return ConvertAzureToStandard(a)
+}
+
+func (a AzureTranscriptResult) GetText() string {
+	return a.CombinedRecognizedPhrases[0].Display
+}
+
 func convertAzureDurationToSeconds(azureDuration string) float64 {
 	re := regexp.MustCompile(`PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?`)
 	matches := re.FindStringSubmatch(azureDuration)
 
 	if matches == nil {
 		log.Println("error parsing duration", azureDuration)
+		return 0.0
 	}
 
 	var totalSeconds float64

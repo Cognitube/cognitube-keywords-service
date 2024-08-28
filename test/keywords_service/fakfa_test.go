@@ -1,8 +1,8 @@
-package test
+package keywords_service
 
 import (
-	"cognitube.com/keywords-service/publish"
-	"cognitube.com/keywords-service/result"
+	"cognitube.com/keywords-service/dal/mq"
+	"cognitube.com/keywords-service/server/service/keywords/result"
 	"context"
 	"github.com/segmentio/kafka-go"
 	"os"
@@ -10,7 +10,7 @@ import (
 )
 
 func TestKafkaPublisher_Publish(t *testing.T) {
-	k := publish.NewKafkaPublisher("localhost", "9092")
+	k := mq.NewKafkaPublisher("localhost", "9092")
 	k.Publish("test", []byte("test message"))
 	// get the message from kafka and assert it
 	// using kafka-go
@@ -21,7 +21,7 @@ func TestTranscriptionResultPublisher_PublishTranscriptionResult(t *testing.T) {
 	os.Setenv("APPLICATION_KAFKA_PORT", "9092")
 	os.Setenv("APPLICATION_KAFKA_TOPIC", "test")
 
-	p := publish.NewKafkaTranscriptionPublisher()
+	p := mq.NewKafkaTranscriptionPublisher()
 	err := p.PublishTranscriptionResult(&result.Result{
 		Success:       true,
 		VideoID:       "test",

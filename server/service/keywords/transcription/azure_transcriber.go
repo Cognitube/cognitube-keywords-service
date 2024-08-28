@@ -1,7 +1,7 @@
 package transcription
 
 import (
-	"cognitube.com/keywords-service/azure"
+	"cognitube.com/keywords-service/dal/azure"
 	"cognitube.com/keywords-service/env"
 	"encoding/json"
 )
@@ -15,32 +15,26 @@ func (a *AzureTranscriber) CreateTranscription(fileUrl string, displayName strin
 	return a.SpeechClient.CreateTranscription(fileUrl, displayName)
 }
 
-func (a *AzureTranscriber) OnTranscriptionCallback(id string) (string, error) {
+func (a *AzureTranscriber) OnTranscriptionCallback(id string) (TranscriptResult, error) {
 	// list all transcription files and get the first one's URL
 	listFileResp, err := a.GetAllTranscriptionFileURLs(id)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	transcriptionJsonURL := listFileResp[0]
 
 	// GET the file and extract the text
 	content, err := a.GetTranscriptionFileContent(transcriptionJsonURL)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	var result AzureTranscriptResult
 	err = json.Unmarshal(content, &result)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	standard := ConvertAzureToStandard(result)
-	text, err := json.MarshalIndent(standard, "", "  ")
-	if err != nil {
-		return "", err
-	}
-	return string(text), nil
+	return result, nil
 }
 
 func NewAzureClient() AsyncTranscriber {

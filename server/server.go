@@ -1,6 +1,8 @@
 package server
 
 import (
+	"cognitube.com/keywords-service/server/service/concat"
+	"cognitube.com/keywords-service/server/service/keywords"
 	"log"
 	"net/http"
 
@@ -11,14 +13,15 @@ type WebServer interface {
 	StartListening(port string)
 }
 
-type CongitubeKeywordsServer struct {
-	keywordsService ICognitubeKeywordsService
+type CongitubeAIServer struct {
+	keywordsService keywords.ICognitubeKeywordsService
+	concatService   concat.IConcatService
 }
 
-func (c *CongitubeKeywordsServer) StartListening(port string) {
+func (c *CongitubeAIServer) StartListening(port string) {
 	router := mux.NewRouter()
 
-	SetupRoutes(router, c.keywordsService)
+	SetupRoutes(router, c)
 
 	log.Println("Server started at port ", port)
 
@@ -26,7 +29,8 @@ func (c *CongitubeKeywordsServer) StartListening(port string) {
 }
 
 func NewCongitubeKeywordsServer() WebServer {
-	return &CongitubeKeywordsServer{
-		keywordsService: NewCognitubeKeywordsService(),
+	return &CongitubeAIServer{
+		keywordsService: keywords.NewCognitubeKeywordsService(),
+		concatService:   concat.NewConcatService(),
 	}
 }

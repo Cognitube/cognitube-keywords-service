@@ -1,6 +1,11 @@
-package server
+package keywords
 
 import (
+	azure2 "cognitube.com/keywords-service/dal/azure"
+	"cognitube.com/keywords-service/dal/mq"
+	keydesc2 "cognitube.com/keywords-service/server/service/keywords/keydesc"
+	"cognitube.com/keywords-service/server/service/keywords/result"
+	transcription2 "cognitube.com/keywords-service/server/service/keywords/transcription"
 	"context"
 	"github.com/go-redis/redis/v8"
 	"io"
@@ -9,30 +14,34 @@ import (
 	"os"
 	"strconv"
 
-	"cognitube.com/keywords-service/azure"
 	"cognitube.com/keywords-service/env"
-	"cognitube.com/keywords-service/keydesc"
-	"cognitube.com/keywords-service/publish"
-	"cognitube.com/keywords-service/result"
-	"cognitube.com/keywords-service/transcription"
 	"github.com/tidwall/gjson"
 )
 
+// ICognitubeKeywordsService receives the direct input from the HTTP request and returns the output to the HTTP response.
+// Considering HTTP response time. Do not perform time-consuming operations outside the scope of the interface
+// Move the time-consuming operations to the implementation of the interface, and if the return value is not necessary for the HTTP response, use goroutines
+type ICognitubeKeywordsService interface {
+	GetKeyDescFromHttpAudioFile(file multipart.File) (string, error)
+	CreateAsyncTranscription(fileUrl string, videoID string) (string, error)
+	OnTranscriptionCallback(payload []byte)
+}
+
 type CongnitubeKeywordsService struct {
-	descriptor       keydesc.KeywordsDescriptor
-	transcriber      transcription.Transcriber
-	asyncTranscriber transcription.AsyncTranscriber
-	resultPublisher  publish.TranscriptionPublisher
-	blobClient       *azure.BlobClient
+	descriptor       keydesc2.KeywordsDescriptor
+	transcriber      transcription2.Transcriber
+	asyncTranscriber transcription2.AsyncTranscriber
+	resultPublisher  mq.TranscriptionPublisher
+	blobClient       *azure2.BlobClient
 }
 
 func NewCognitubeKeywordsService() ICognitubeKeywordsService {
 	return &CongnitubeKeywordsService{
-		descriptor:       keydesc.NewKeywordsDescriptor("gpt"),
-		transcriber:      transcription.NewTranscriber("whisper"),
-		asyncTranscriber: transcription.NewAsyncTranscriberClient("azure"),
-		resultPublisher:  publish.NewKafkaTranscriptionPublisher(),
-		blobClient:       azure.NewBlobClient(),
+		descriptor:       keydesc2.NewKeywordsDescriptor("gpt"),
+		transcriber:      transcription2.NewTranscriber("whisper"),
+		asyncTranscriber: transcription2.NewAsyncTranscriberClient("azure"),
+		resultPublisher:  mq.NewKafkaTranscriptionPublisher(),
+		blobClient:       azure2.NewBlobClient(),
 	}
 }
 
@@ -99,7 +108,7 @@ func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
 		success, errStr = false, "self URL not found in payload"
 	}
 
-	id := azure.GetJobIDFromSelfURL(url)
+	id := azure2.GetJobIDFromSelfURL(url)
 	if id == "" {
 		success, errStr = false, "invalid self URL"
 	}
@@ -113,12 +122,15 @@ func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
 		success, errStr = false, err.Error()
 	}
 
+	standard := transcript.ToStandard()
+	subtitle := standard.ToJson()
+
 	retry := -1
 	desc := ""
-	for keydesc.ValidateKeywordsResult(desc) != true {
+	for keydesc2.ValidateKeywordsResult(desc) != true {
 		log.Println("Generating keywords description for job ID: ", id)
 		log.Println("Trying " + strconv.Itoa(retry+2) + " times")
-		desc, err = c.descriptor.Describe(transcript)
+		desc, err = c.descriptor.Describe(subtitle)
 		if err != nil {
 			success = false
 			errStr = err.Error()
@@ -134,16 +146,21 @@ func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
 	}
 
 	transUrl := ""
-	if transcript != "" && success {
+	if transcript.GetText() != "" && success {
 		log.Println("Publishing transcription result for job ID: ", id)
-		transUrl, err = c.blobClient.UploadTranscript(id+".json", transcript)
-
+		transUrl, err = c.blobClient.UploadTranscript(id+".txt", transcript.GetText())
 	}
 
 	keywordsUrl := ""
 	if desc != "" && success {
 		log.Println("Publishing keywords result for job ID: ", id)
 		keywordsUrl, _ = c.blobClient.UploadKeywords(id+".json", desc)
+	}
+
+	subtitleUrl := ""
+	if subtitle != "" && success {
+		log.Println("Publishing subtitle for job ID: ", id)
+		subtitleUrl, err = c.blobClient.UploadSubtitle(id+".json", subtitle)
 	}
 
 	log.Println("Publishing final result for job ID: ", id)
@@ -153,6 +170,7 @@ func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
 		KeywordsURL:   keywordsUrl,
 		TranscriptURL: transUrl,
 		Error:         errStr,
+		SubtitleURL:   subtitleUrl,
 	})
 }
 

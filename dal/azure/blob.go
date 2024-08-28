@@ -27,6 +27,10 @@ func (b *BlobClient) UploadBlob(container string, blobName string, data []byte) 
 	return blobUrl, err
 }
 
+func (b *BlobClient) UploadSubtitle(filename, subtitle string) (string, error) {
+	return b.UploadBlob(env.GetInstance().SubtitleContainerName, filename, []byte(subtitle))
+}
+
 func (b *BlobClient) UploadTranscript(filename, transcript string) (string, error) {
 	return b.UploadBlob(env.GetInstance().TranscriptContainerName, filename, []byte(transcript))
 }
