@@ -13,6 +13,7 @@ import (
 	"mime/multipart"
 	"os"
 	"strconv"
+	"time"
 
 	"cognitube.com/keywords-service/env"
 	"github.com/tidwall/gjson"
@@ -190,12 +191,14 @@ func GetRedisOptions() *redis.Options {
 	return option
 }
 
+const prefix = "ai-service:transcription-id:"
+
 func PutTranscriptIDToVideoID(tid string, vid string) {
 	log.Println("Putting transcript ID to video ID mapping, ", tid, " -> ", vid)
 	option := GetRedisOptions()
 	client := redis.NewClient(option)
 	defer client.Close()
-	err := client.Set(context.Background(), tid, vid, 0).Err()
+	err := client.Set(context.Background(), prefix+tid, vid, 5*time.Hour).Err()
 	if err != nil {
 		log.Println("Failed to set transcript ID to video ID mapping")
 	}
@@ -206,9 +209,16 @@ func PopVideoIDFromTranscriptID(tid string) string {
 	option := GetRedisOptions()
 	client := redis.NewClient(option)
 	defer client.Close()
-	vid, err := client.Get(context.Background(), tid).Result()
+
+	vid, err := client.Get(context.Background(), prefix+tid).Result()
 	if err != nil {
 		log.Println("Failed to get video ID for transcript ID: ", tid)
+	}
+
+	// Delete the key-value pair after retrieving it
+	err = client.Del(context.Background(), prefix+tid).Err()
+	if err != nil {
+		log.Println("Failed to delete video ID for transcript ID: ", tid)
 	}
 	return vid
 }
