@@ -60,6 +60,7 @@ func convertAzureDurationToSeconds(azureDuration string) float64 {
 
 	if matches == nil {
 		log.Println("error parsing duration", azureDuration)
+		return 0.0
 	}
 
 	var totalSeconds float64
