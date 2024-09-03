@@ -27,6 +27,7 @@ type Variables struct {
 	Username                 string
 	RedisConnectionString    string
 	SubtitleContainerName    string
+	KafkaBootstrapServers    string
 }
 
 var instance *Variables
@@ -55,6 +56,7 @@ func loadValues() {
 		Username:                 os.Getenv("KAFKA_USERNAME"),
 		RedisConnectionString:    os.Getenv("REDIS_CONNECTION_STRING"),
 		SubtitleContainerName:    os.Getenv("SUBTITLE_CONTAINER_NAME"),
+		KafkaBootstrapServers:    os.Getenv("KAFKA_BOOTSTRAP_SERVERS"),
 	}
 }
 
