@@ -25,8 +25,6 @@ func (p *KafkaPublisher) PublishProd(topic string, message []byte) error {
 
 	bootstrapServers := env.GetInstance().KafkaBootstrapServers
 
-	log.Println(eventHubNamespace, connectionString, username, bootstrapServers)
-
 	var addr string
 	if eventHubNamespace != "" {
 		addr = eventHubNamespace + ".servicebus.windows.net:9093"
@@ -38,6 +36,10 @@ func (p *KafkaPublisher) PublishProd(topic string, message []byte) error {
 	mechanism := plain.Mechanism{
 		Username: username,
 		Password: connectionString,
+	}
+
+	if eventHubNamespace == "" {
+		mechanism = plain.Mechanism{}
 	}
 
 	writer := &kafka.Writer{
