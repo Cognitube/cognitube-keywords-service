@@ -23,14 +23,27 @@ func (p *KafkaPublisher) PublishProd(topic string, message []byte) error {
 	connectionString := env.GetInstance().EventHubConnectionString
 	username := env.GetInstance().Username
 
+	bootstrapServers := env.GetInstance().KafkaBootstrapServers
+
+	var addr string
+	if eventHubNamespace != "" {
+		addr = eventHubNamespace + ".servicebus.windows.net:9093"
+	} else {
+		addr = bootstrapServers
+	}
+
 	// Set up SASL configuration
 	mechanism := plain.Mechanism{
 		Username: username,
 		Password: connectionString,
 	}
 
+	if eventHubNamespace == "" {
+		mechanism = plain.Mechanism{}
+	}
+
 	writer := &kafka.Writer{
-		Addr:     kafka.TCP(eventHubNamespace + ".servicebus.windows.net:9093"),
+		Addr:     kafka.TCP(addr),
 		Topic:    topic,
 		Balancer: &kafka.LeastBytes{},
 		Transport: &kafka.Transport{

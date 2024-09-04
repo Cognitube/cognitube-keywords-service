@@ -39,10 +39,10 @@ ENV APPLICATION_KAFKA_TOPIC=video-ai
 ENV APPLICATION_OPENAI_KEY=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
 ENV APPLICATION_WHISPER_URL=https://api.openai.com/v1/audio/transcriptions
 ENV AZURE_BLOB_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=cognitube;AccountKey=a1XDmr4IlO9I/tcsuh1akTaGFgmp+nQEoQdA8SlFpmmn7Zi0HKeDMk3ntxWjGI/HMFpQjzBys2ZX+AStqYVfsg==;EndpointSuffix=core.windows.net"
-ENV KAFKA_EVENTHUB_NAMESPACE=cognitube-kafka
+# ENV KAFKA_EVENTHUB_NAMESPACE=cognitube-kafka
 ENV KAFKA_EVENTHUB_NAME=cognitube
-ENV KAFKA_EVENTHUB_CONNECTION_STRING="Endpoint=sb://cognitube-kafka.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=l9+PMVbv8R4LuCtQlPo5x8PIE8jZqn8O4+AEhEMQoqA="
-ENV KAFKA_USERNAME=\$ConnectionString
+# ENV KAFKA_EVENTHUB_CONNECTION_STRING="Endpoint=sb://cognitube-kafka.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=l9+PMVbv8R4LuCtQlPo5x8PIE8jZqn8O4+AEhEMQoqA="
+# ENV KAFKA_USERNAME=\$ConnectionString
 ENV TRANSCRIPT_CONTAINER_NAME=transcript-container
 ENV KEYWORDS_CONTAINER_NAME=keywords-container
 ENV SUBTITLE_CONTAINER_NAME=subtitle-container
