@@ -22,7 +22,6 @@ type Variables struct {
 	KeywordDescMaxRetry      int
 	ApplicationCallbackUrl   string
 	EventHubNamespace        string
-	EventHubName             string
 	EventHubConnectionString string
 	Username                 string
 	RedisConnectionString    string
@@ -51,9 +50,8 @@ func loadValues() {
 		KeywordDescMaxRetry:      3,
 		ApplicationCallbackUrl:   os.Getenv("APPLICATION_CALLBACK_URL"),
 		EventHubNamespace:        os.Getenv("KAFKA_EVENTHUB_NAMESPACE"),
-		EventHubName:             os.Getenv("KAFKA_EVENTHUB_USERNAME"),
-		EventHubConnectionString: os.Getenv("KAFKA_EVENTHUB_CONNECTIONSTRING"),
-		Username:                 os.Getenv("KAFKA_USERNAME"),
+		EventHubConnectionString: os.Getenv("AZURE_EVENTHUB_CONNECTIONSTRING"),
+		Username:                 os.Getenv("KAFKA_EVENTHUB_USERNAME"),
 		RedisConnectionString:    os.Getenv("REDIS_CONNECTION_STRING"),
 		SubtitleContainerName:    os.Getenv("SUBTITLE_CONTAINER_NAME"),
 		KafkaBootstrapServers:    os.Getenv("KAFKA_BOOTSTRAP_SERVERS"),
