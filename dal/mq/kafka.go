@@ -3,6 +3,7 @@ package mq
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"log"
 
 	"cognitube.com/keywords-service/env"
@@ -45,6 +46,10 @@ func (p *KafkaPublisher) PublishProd(topic string, message []byte) error {
 			TLS: nil, // No TLS for local Kafka (usually not needed)
 		}
 	}
+
+	log.Println(eventHubNamespace, connectionString, username, bootstrapServers)
+	t, _ := json.Marshal(transport)
+	log.Println(string(t))
 
 	writer := &kafka.Writer{
 		Addr:      kafka.TCP(addr),
