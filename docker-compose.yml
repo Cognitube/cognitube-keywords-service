@@ -1,6 +1,6 @@
 services:
     cognitube-keyword-service:
-        image: cognituberegistry.azurecr.io/cognitube-ai-service:latest
+        build: .
         container_name: cognitube-keyword-service_local
         environment:
             APPLICATION_CALLBACK_URL: { YOUR_CALLBACK_URL }
