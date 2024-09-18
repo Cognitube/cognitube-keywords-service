@@ -1,12 +1,13 @@
 package handler
 
 import (
-	"cognitube.com/keywords-service/server/service/keywords"
 	"encoding/json"
 	"io"
 	"log"
 	"net/http"
 	"os"
+
+	"cognitube.com/keywords-service/server/service/keywords"
 )
 
 type KeywordsHandler struct {
@@ -88,6 +89,31 @@ func (h *KeywordsHandler) CreateTranscription(w http.ResponseWriter, r *http.Req
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(id))
+}
+
+func (h *KeywordsHandler) ProcessTranscriptionResult(w http.ResponseWriter, r *http.Request) {
+	log.Println("Process transcription result request received")
+	var reqData struct {
+		ID string `json:"id"`
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	err = json.Unmarshal(body, &reqData)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	log.Printf("Received request: %+v\n", reqData)
+	h.keywordService.ProcessTranscriptionResult(reqData.ID)
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *KeywordsHandler) GetKeywords(w http.ResponseWriter, r *http.Request) {
