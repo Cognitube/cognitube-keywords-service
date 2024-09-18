@@ -110,7 +110,7 @@ func (c *CognitubeKeywordsService) addTranscriptionResultCheckMessage(transcript
 	newKafkaMessage := result.KeywordCheckMessage{
 		ID:        transcriptionID,
 		VideoID:   videoID,
-		RetryTime: time.Now().Add(5 * time.Minute).Unix(),
+		RetryTime: time.Now().Add(2 * time.Minute).Unix(),
 	}
 
 	msg, _ := json.Marshal(newKafkaMessage)
