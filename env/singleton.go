@@ -16,6 +16,7 @@ type Variables struct {
 	KafkaHost                string
 	KafkaPort                string
 	KafkaTopic               string
+	KafkaKeywordCheckTopic   string
 	BlobConnectString        string
 	TranscriptContainerName  string
 	KeywordsContainerName    string
@@ -44,6 +45,7 @@ func loadValues() {
 		KafkaHost:                os.Getenv("APPLICATION_KAFKA_HOST"),
 		KafkaPort:                os.Getenv("APPLICATION_KAFKA_PORT"),
 		KafkaTopic:               os.Getenv("APPLICATION_KAFKA_TOPIC"),
+		KafkaKeywordCheckTopic:   os.Getenv("APPLICATION_KAFKA_KEYWORD_CHECK_TOPIC"),
 		BlobConnectString:        os.Getenv("AZURE_BLOB_CONNECTION_STRING"),
 		TranscriptContainerName:  os.Getenv("TRANSCRIPT_CONTAINER_NAME"),
 		KeywordsContainerName:    os.Getenv("KEYWORDS_CONTAINER_NAME"),

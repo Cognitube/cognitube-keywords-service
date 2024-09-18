@@ -1,20 +1,22 @@
 package keywords
 
 import (
-	azure2 "cognitube.com/keywords-service/dal/azure"
-	"cognitube.com/keywords-service/dal/mq"
-	myredis "cognitube.com/keywords-service/dal/redis"
-	keydesc2 "cognitube.com/keywords-service/server/service/keywords/keydesc"
-	"cognitube.com/keywords-service/server/service/keywords/result"
-	transcription2 "cognitube.com/keywords-service/server/service/keywords/transcription"
 	"context"
-	"github.com/go-redis/redis/v8"
+	"encoding/json"
 	"io"
 	"log"
 	"mime/multipart"
 	"os"
 	"strconv"
 	"time"
+
+	azure2 "cognitube.com/keywords-service/dal/azure"
+	"cognitube.com/keywords-service/dal/mq"
+	myredis "cognitube.com/keywords-service/dal/redis"
+	keydesc2 "cognitube.com/keywords-service/server/service/keywords/keydesc"
+	"cognitube.com/keywords-service/server/service/keywords/result"
+	transcription2 "cognitube.com/keywords-service/server/service/keywords/transcription"
+	"github.com/go-redis/redis/v8"
 
 	"cognitube.com/keywords-service/env"
 	"github.com/tidwall/gjson"
@@ -27,9 +29,10 @@ type ICognitubeKeywordsService interface {
 	GetKeyDescFromHttpAudioFile(file multipart.File) (string, error)
 	CreateAsyncTranscription(fileUrl string, videoID string) (string, error)
 	OnTranscriptionCallback(payload []byte)
+	ProcessTranscriptionResult(id string)
 }
 
-type CongnitubeKeywordsService struct {
+type CognitubeKeywordsService struct {
 	descriptor       keydesc2.KeywordsDescriptor
 	transcriber      transcription2.Transcriber
 	asyncTranscriber transcription2.AsyncTranscriber
@@ -38,7 +41,7 @@ type CongnitubeKeywordsService struct {
 }
 
 func NewCognitubeKeywordsService() ICognitubeKeywordsService {
-	return &CongnitubeKeywordsService{
+	return &CognitubeKeywordsService{
 		descriptor:       keydesc2.NewKeywordsDescriptor("gpt"),
 		transcriber:      transcription2.NewTranscriber("whisper"),
 		asyncTranscriber: transcription2.NewAsyncTranscriberClient("azure"),
@@ -70,7 +73,7 @@ func convertMultipartFileToOsFile(file multipart.File) (*os.File, error) {
 	return tempFile, nil
 }
 
-func (c *CongnitubeKeywordsService) GetKeyDescFromHttpAudioFile(multiFile multipart.File) (string, error) {
+func (c *CognitubeKeywordsService) GetKeyDescFromHttpAudioFile(multiFile multipart.File) (string, error) {
 	// Convert multipart.File to os.File
 	defer multiFile.Close()
 	file, err := convertMultipartFileToOsFile(multiFile)
@@ -92,28 +95,39 @@ func (c *CongnitubeKeywordsService) GetKeyDescFromHttpAudioFile(multiFile multip
 	return keywords, nil
 }
 
-func (c *CongnitubeKeywordsService) CreateAsyncTranscription(fileUrl string, videoID string) (string, error) {
+func (c *CognitubeKeywordsService) CreateAsyncTranscription(fileUrl string, videoID string) (string, error) {
 	id, err := c.asyncTranscriber.CreateTranscription(fileUrl, videoID)
 	if err != nil {
 		return "", err
 	}
+
 	PutTranscriptIDToVideoID(id, videoID)
+	c.addTranscriptionResultCheckMessage(id, videoID)
 	return id, nil
 }
 
-func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
-	success := true
-	errStr := ""
-
-	url := gjson.GetBytes(payload, "self").String()
-	if url == "" {
-		success, errStr = false, "self URL not found in payload"
+func (c *CognitubeKeywordsService) addTranscriptionResultCheckMessage(transcriptionID, videoID string) {
+	newKafkaMessage := result.KeywordCheckMessage{
+		ID:        transcriptionID,
+		VideoID:   videoID,
+		RetryTime: time.Now().Add(2 * time.Minute).Unix(),
 	}
 
-	id := azure2.GetJobIDFromSelfURL(url)
-	if id == "" {
-		success, errStr = false, "invalid self URL"
+	msg, _ := json.Marshal(newKafkaMessage)
+	// Add the message to the message queue
+	err := c.resultPublisher.Publish(env.GetInstance().KafkaKeywordCheckTopic, msg)
+	if err != nil {
+		log.Println("Failed to add transcription result check message to Kafka")
 	}
+}
+
+func (c *CognitubeKeywordsService) ProcessTranscriptionResult(id string) {
+	go c.processTranscriptionResult(id, true, "")
+}
+
+func (c *CognitubeKeywordsService) processTranscriptionResult(id string, isSuccess bool, errString string) {
+	success := isSuccess
+	errStr := errString
 
 	vid := PopVideoIDFromTranscriptID(id) // vid might be ""
 	log.Println("Find Transcription Job ID: ", id, " for Video ID: ", vid)
@@ -174,6 +188,23 @@ func (c *CongnitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
 		Error:         errStr,
 		SubtitleURL:   subtitleUrl,
 	})
+}
+
+func (c *CognitubeKeywordsService) OnTranscriptionCallback(payload []byte) {
+	success := true
+	errStr := ""
+
+	url := gjson.GetBytes(payload, "self").String()
+	if url == "" {
+		success, errStr = false, "self URL not found in payload"
+	}
+
+	id := azure2.GetJobIDFromSelfURL(url)
+	if id == "" {
+		success, errStr = false, "invalid self URL"
+	}
+
+	c.processTranscriptionResult(id, success, errStr)
 }
 
 func GetRedisOptions() *redis.Options {

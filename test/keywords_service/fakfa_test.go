@@ -1,12 +1,13 @@
 package keywords_service
 
 import (
-	"cognitube.com/keywords-service/dal/mq"
-	"cognitube.com/keywords-service/server/service/keywords/result"
 	"context"
-	"github.com/segmentio/kafka-go"
 	"os"
 	"testing"
+
+	"cognitube.com/keywords-service/dal/mq"
+	"cognitube.com/keywords-service/server/service/keywords/result"
+	"github.com/segmentio/kafka-go"
 )
 
 func TestKafkaPublisher_Publish(t *testing.T) {
