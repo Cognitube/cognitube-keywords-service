@@ -6,7 +6,7 @@ import (
 )
 
 // SetupRoutes configures the HTTP routes for the server.
-func SetupRoutes(r *mux.Router, s *CongitubeAIServer) {
+func SetupRoutes(r *mux.Router, s *CognitubeAIServer) {
 	// Keywords Service Routes
 	keywordsHandler := handler.NewKeywordsHandler(s.keywordsService)
 	r.HandleFunc("/", handler.Home).Methods("GET")
